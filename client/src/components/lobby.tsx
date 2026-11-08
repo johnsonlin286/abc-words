@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { copyText } from "@/lib/clipboard";
-import type { RoomPreview } from "@/shared/socket-events";
+import type { RoomSummary } from "@/shared/contract";
+import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore } from "@/stores/room-store";
 import CreateRoomForm from "./create-room-form";
 import JoinRoomForm from "./join-room-form";
@@ -17,10 +18,12 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function Lobby() {
   const clearError = useRoomStore((s) => s.clearError);
+  const signOut = useRoomStore((s) => s.signOut);
+  const connection = useRoomStore((s) => s.connection);
+  const roomNotice = useRoomStore((s) => s.notice);
+  const user = useAuthStore((s) => s.user);
 
   const [tab, setTab] = useState<Tab>("create");
-  // Shared across both forms so the name survives tab switches.
-  const [userName, setUserName] = useState("");
   const [code, setCode] = useState("");
   const [codeLocked, setCodeLocked] = useState(false);
   const [selectionId, setSelectionId] = useState(0);
@@ -31,12 +34,12 @@ export default function Lobby() {
     clearError();
   };
 
-  const handleSelectRoom = async (room: RoomPreview) => {
+  const handleSelectRoom = async (room: RoomSummary) => {
     switchTab("join");
     setCode(room.id);
     setSelectionId((n) => n + 1);
 
-    if (room.isPrivate) {
+    if (room.hasPassword) {
       // Private: copy the code and show it in the (editable) code field.
       setCodeLocked(false);
       const copied = await copyText(room.id);
@@ -57,7 +60,21 @@ export default function Lobby() {
       <div className="space-y-5 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
         <div>
           <h1 className="text-xl font-semibold">ABC Words</h1>
-          <p className="text-sm text-zinc-500">Buat room baru atau gabung ke room yang ada.</p>
+          <p className="text-sm text-zinc-500">
+            Halo, <span className="font-medium text-zinc-800 dark:text-zinc-200">{user?.name}</span>
+            {" · "}
+            <button type="button" onClick={signOut} className="text-blue-600 hover:underline">
+              ganti nama
+            </button>
+          </p>
+          {connection === "reconnecting" && (
+            <p className="mt-1 text-xs text-amber-600">Menghubungkan ulang ke server…</p>
+          )}
+          {roomNotice && (
+            <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+              {roomNotice}
+            </p>
+          )}
         </div>
 
         <div role="tablist" className="grid grid-cols-2 rounded-md bg-zinc-100 p-1 text-sm dark:bg-zinc-900">
@@ -86,11 +103,9 @@ export default function Lobby() {
         )}
 
         {tab === "create" ? (
-          <CreateRoomForm userName={userName} onUserNameChange={setUserName} />
+          <CreateRoomForm />
         ) : (
           <JoinRoomForm
-            userName={userName}
-            onUserNameChange={setUserName}
             code={code}
             onCodeChange={(value) => {
               setCode(value);

@@ -2,12 +2,12 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { listRooms } from "@/lib/api";
 import { getGameSocket } from "@/lib/game-socket";
-import type { RoomPreview } from "@/shared/socket-events";
-import { listRooms } from "@/stores/room-store";
+import type { RoomSummary } from "@/shared/contract";
 
 type Props = {
-  onSelect: (room: RoomPreview) => void;
+  onSelect: (room: RoomSummary) => void;
 };
 
 export function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
@@ -28,7 +28,8 @@ export default function RoomList({ onSelect }: Props) {
   const queryClient = useQueryClient();
   const rooms = useQuery({ queryKey: ["rooms"], queryFn: listRooms, retry: false });
 
-  // Server pushes "rooms:changed" whenever rooms are created/closed/joined/left.
+  // The server pushes "rooms:changed" whenever the lobby list changes (room created/closed,
+  // player joined/left, host changed); refetch the list and the join-form preview then.
   useEffect(() => {
     const s = getGameSocket();
     const refresh = () => {
@@ -36,7 +37,7 @@ export default function RoomList({ onSelect }: Props) {
       queryClient.invalidateQueries({ queryKey: ["room-peek"] });
     };
     s.on("rooms:changed", refresh);
-    s.on("connect", refresh); // catch up after a reconnect
+    s.on("connect", refresh); // catch up on anything missed while disconnected
     return () => {
       s.off("rooms:changed", refresh);
       s.off("connect", refresh);
@@ -68,7 +69,7 @@ export default function RoomList({ onSelect }: Props) {
       {rooms.data && rooms.data.length > 0 && (
         <ul className="max-h-80 space-y-2 overflow-y-auto">
           {rooms.data.map((room) => {
-            const full = room.memberCount >= room.maxMembers;
+            const full = room.memberCount >= room.maxMembers || room.locked;
             return (
               <li key={room.id}>
                 <button
@@ -80,11 +81,11 @@ export default function RoomList({ onSelect }: Props) {
                   <div className="min-w-0 flex-1">
                     <p className="font-mono text-sm font-semibold tracking-widest">{room.id}</p>
                     <p className="truncate text-xs text-zinc-500">
-                      Host: {room.hostName} · {room.memberCount}/{room.maxMembers} pemain
+                      Host: {room.hostName ?? "—"} · {room.memberCount}/{room.maxMembers} pemain
                       {full && " · penuh"}
                     </p>
                   </div>
-                  <VisibilityBadge isPrivate={room.isPrivate} />
+                  <VisibilityBadge isPrivate={room.hasPassword} />
                 </button>
               </li>
             );

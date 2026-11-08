@@ -1,15 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { LIMITS } from "@/shared/socket-events";
+import { LIMITS } from "@/shared/game";
 import { useRoomStore } from "@/stores/room-store";
 
-type Props = {
-  userName: string;
-  onUserNameChange: (value: string) => void;
-};
-
-export default function CreateRoomForm({ userName, onUserNameChange: setUserName }: Props) {
+export default function CreateRoomForm() {
   const createRoom = useRoomStore((s) => s.createRoom);
   const pending = useRoomStore((s) => s.pending);
   const serverError = useRoomStore((s) => s.error);
@@ -20,35 +15,17 @@ export default function CreateRoomForm({ userName, onUserNameChange: setUserName
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const name = userName.trim();
-    if (!name) return setLocalError("Nama wajib diisi.");
     if (isPrivate && password.length < LIMITS.passwordMin) {
       return setLocalError(`Kata sandi wajib untuk room privat (min. ${LIMITS.passwordMin} karakter).`);
     }
     setLocalError(null);
-    await createRoom({ userName: name, isPrivate, password: isPrivate ? password : undefined });
+    await createRoom({ isPrivate, password: isPrivate ? password : undefined });
   };
 
   const error = localError ?? serverError;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">
-          Nama <span className="text-red-500">*</span>
-        </span>
-        <input
-          className="w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-          maxLength={LIMITS.userName}
-          placeholder="mis. Budi"
-          autoFocus
-          required
-        />
-      </label>
-
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Jenis room</legend>
         <div className="grid grid-cols-2 gap-2">

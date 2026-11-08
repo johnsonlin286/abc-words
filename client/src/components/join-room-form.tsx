@@ -2,16 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { LIMITS } from "@/shared/socket-events";
-import { peekRoom, useRoomStore } from "@/stores/room-store";
+import { getRoomSummary } from "@/lib/api";
+import { LIMITS } from "@/shared/game";
+import { useRoomStore } from "@/stores/room-store";
 import { VisibilityBadge } from "./room-list";
 
 const inputClass =
   "w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700";
 
 type Props = {
-  userName: string;
-  onUserNameChange: (value: string) => void;
   code: string;
   onCodeChange: (value: string) => void;
   /** Room was picked from the list: hide the code input, show only the room card. */
@@ -22,8 +21,6 @@ type Props = {
 };
 
 export default function JoinRoomForm({
-  userName,
-  onUserNameChange: setUserName,
   code,
   onCodeChange,
   codeLocked,
@@ -36,7 +33,6 @@ export default function JoinRoomForm({
 
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
-  const nameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
   const codeComplete = code.length === LIMITS.roomCode;
@@ -44,7 +40,7 @@ export default function JoinRoomForm({
   // Look the room up as soon as a full code is present, to know if it needs a password.
   const preview = useQuery({
     queryKey: ["room-peek", code],
-    queryFn: () => peekRoom(code),
+    queryFn: () => getRoomSummary(code),
     enabled: codeComplete,
     retry: false,
     staleTime: 0,
@@ -52,14 +48,13 @@ export default function JoinRoomForm({
 
   const room = preview.data;
   const isFull = room ? room.memberCount >= room.maxMembers : false;
+  const needsPassword = room?.hasPassword ?? false;
 
-  // After picking a room from the list, focus the first field still empty.
+  // After picking a private room from the list, jump to the password field
+  // as soon as it appears.
   useEffect(() => {
-    if (selectionId === 0) return;
-    if (!userName.trim()) nameRef.current?.focus();
-    else passwordRef.current?.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on new selection
-  }, [selectionId]);
+    if (selectionId > 0 && needsPassword) passwordRef.current?.focus();
+  }, [selectionId, needsPassword]);
 
   const handleCodeChange = (value: string) => {
     onCodeChange(value.replace(/[^a-z0-9]/gi, "").toUpperCase());
@@ -68,15 +63,12 @@ export default function JoinRoomForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const name = userName.trim();
-    if (!name) return setLocalError("Nama wajib diisi.");
     if (!room) return setLocalError("Masukkan kode room yang valid.");
-    if (room.isPrivate && !password) return setLocalError("Kata sandi wajib diisi.");
+    if (needsPassword && !password) return setLocalError("Kata sandi wajib diisi.");
     setLocalError(null);
     const ok = await joinRoom({
       roomId: room.id,
-      userName: name,
-      password: room.isPrivate ? password : undefined,
+      password: needsPassword ? password : undefined,
     });
     if (!ok) preview.refetch(); // member count may have changed
   };
@@ -85,28 +77,13 @@ export default function JoinRoomForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">
-          Nama <span className="text-red-500">*</span>
-        </span>
-        <input
-          ref={nameRef}
-          className={inputClass}
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-          maxLength={LIMITS.userName}
-          placeholder="mis. Sari"
-          autoFocus={!codeLocked}
-          required
-        />
-      </label>
-
       {!codeLocked && (
         <label className="block space-y-1">
           <span className="text-sm font-medium">
             Kode room <span className="text-red-500">*</span>
           </span>
           <input
+            autoFocus
             className={`${inputClass} font-mono text-lg tracking-[0.3em] uppercase`}
             value={code}
             onChange={(e) => handleCodeChange(e.target.value)}
@@ -130,13 +107,13 @@ export default function JoinRoomForm({
                   <p className="font-mono font-semibold tracking-widest">{room.id}</p>
                 )}
                 <p className="truncate">
-                  Host: <span className="font-medium">{room.hostName}</span>
+                  Host: <span className="font-medium">{room.hostName ?? "—"}</span>
                 </p>
                 <p className={`text-xs ${isFull ? "text-red-600" : "text-zinc-500"}`}>
                   {room.memberCount}/{room.maxMembers} pemain{isFull && " — penuh"}
                 </p>
               </div>
-              <VisibilityBadge isPrivate={room.isPrivate} />
+              <VisibilityBadge isPrivate={room.hasPassword} />
             </div>
           )}
           {codeLocked && (
@@ -151,7 +128,7 @@ export default function JoinRoomForm({
         </div>
       )}
 
-      {room?.isPrivate && (
+      {needsPassword && (
         <label className="block space-y-1">
           <span className="text-sm font-medium">
             Kata sandi <span className="text-red-500">*</span>

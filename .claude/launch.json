@@ -4,13 +4,13 @@
     {
       "name": "next-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": ["--prefix", "client", "run", "dev"],
       "port": 3000
     },
     {
-      "name": "socket-server",
+      "name": "backend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:server"],
+      "runtimeArgs": ["--prefix", "backend", "run", "dev"],
       "port": 3001
     }
   ]
