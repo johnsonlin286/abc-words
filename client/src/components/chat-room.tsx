@@ -18,6 +18,7 @@ export default function ChatRoom() {
 
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -25,6 +26,12 @@ export default function ChatRoom() {
   }, [messages.length]);
 
   if (!room || !me) return null;
+
+  const copy = async (kind: "code" | "link", value: string) => {
+    if (!(await copyText(value))) return;
+    setCopied(kind);
+    setTimeout(() => setCopied(null), 1500);
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,13 +50,16 @@ export default function ChatRoom() {
           <p className="text-xs text-zinc-500">Kode room</p>
           <div className="flex items-center gap-2">
             <span className="font-mono text-2xl font-semibold tracking-widest">{room.id}</span>
-            <button
-              className="text-xs text-blue-600 hover:underline"
-              onClick={() => copyText(room.id)}
-            >
-              salin
+            <button className="text-xs text-blue-600 hover:underline" onClick={() => copy("code", room.id)}>
+              {copied === "code" ? "tersalin" : "salin"}
             </button>
           </div>
+          <button
+            className="text-xs text-blue-600 hover:underline"
+            onClick={() => copy("link", `${window.location.origin}/room/${room.id}`)}
+          >
+            {copied === "link" ? "Link tersalin" : "Salin link undangan"}
+          </button>
           <div className="mt-1">
             <VisibilityBadge isPrivate={room.hasPassword} />
           </div>

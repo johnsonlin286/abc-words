@@ -16,6 +16,8 @@ type Props = {
   /** Room was picked from the list: hide the code input, show only the room card. */
   codeLocked: boolean;
   onUnlockCode: () => void;
+  /** Text of the link that calls `onUnlockCode`. */
+  unlockLabel?: string;
   /** Changes every time a room is picked from the list, to move focus. */
   selectionId: number;
 };
@@ -25,6 +27,7 @@ export default function JoinRoomForm({
   onCodeChange,
   codeLocked,
   onUnlockCode,
+  unlockLabel = "Pakai kode lain",
   selectionId,
 }: Props) {
   const joinRoom = useRoomStore((s) => s.joinRoom);
@@ -122,7 +125,7 @@ export default function JoinRoomForm({
               onClick={onUnlockCode}
               className="mt-1 text-xs text-blue-600 hover:underline"
             >
-              Pakai kode lain
+              {unlockLabel}
             </button>
           )}
         </div>

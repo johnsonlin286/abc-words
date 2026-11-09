@@ -11,6 +11,11 @@ export const LIMITS = {
   message: 500,
 } as const;
 
+/** Room codes in URLs and forms: uppercase letters and digits. Expects an uppercased string. */
+export function isRoomCode(code: string): boolean {
+  return code.length === LIMITS.roomCode && /^[A-Z0-9]+$/.test(code);
+}
+
 /** Room type = backend module that handles the room (backend/src/modules/chat). */
 export const ROOM_TYPE = "chat";
 

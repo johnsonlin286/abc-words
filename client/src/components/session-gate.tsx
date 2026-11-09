@@ -1,23 +1,25 @@
 "use client";
 
 import { useEffect } from "react";
-import ChatRoom from "@/components/chat-room";
-import Lobby from "@/components/lobby";
 import SignInForm from "@/components/sign-in-form";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore } from "@/stores/room-store";
 
-function Game() {
+function Connected({ children }: { children: React.ReactNode }) {
   const start = useRoomStore((s) => s.start);
-  const inRoom = useRoomStore((s) => s.room !== null);
 
   // Reconnects with the stored session after a refresh; the server puts us back in our room.
   useEffect(() => start(), [start]);
 
-  return inRoom ? <ChatRoom /> : <Lobby />;
+  return children;
 }
 
-export default function Home() {
+/**
+ * Wraps the content of every game page (inside the page, so layouts keep rendering
+ * their segment on the server): asks for a name first, without changing the URL,
+ * so someone opening an invite link lands back on that room after signing in.
+ */
+export default function SessionGate({ children }: { children: React.ReactNode }) {
   const hydrated = useAuthStore((s) => s.hydrated);
   const signedIn = useAuthStore((s) => s.user !== null);
 
@@ -26,9 +28,6 @@ export default function Home() {
     useAuthStore.persist.rehydrate();
   }, []);
 
-  return (
-    <main className="flex flex-1 items-center justify-center bg-zinc-50 p-4 sm:p-6 dark:bg-black">
-      {!hydrated ? null : signedIn ? <Game /> : <SignInForm />}
-    </main>
-  );
+  if (!hydrated) return null;
+  return signedIn ? <Connected>{children}</Connected> : <SignInForm />;
 }

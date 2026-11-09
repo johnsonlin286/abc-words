@@ -20,6 +20,10 @@ export type ChatRoomView = RoomView<ChatState>;
 
 type RoomState = {
   connection: Connection;
+  /** True once the server has told us, after connecting, whether we are in a room. */
+  ready: boolean;
+  /** The room the server says we are in. Routes navigate from this, not from user actions. */
+  roomId: string | null;
   room: ChatRoomView | null;
   messages: ChatMessage[];
   pending: boolean;
@@ -52,14 +56,15 @@ function mergeMessage(list: ChatMessage[], msg: ChatMessage): ChatMessage[] {
   return list.some((m) => m.id === msg.id) ? list : [...list, msg].slice(-MAX_MESSAGES);
 }
 
-const NO_ROOM = { room: null, messages: [] as ChatMessage[] };
+const NO_ROOM = { roomId: null, room: null, messages: [] as ChatMessage[] };
 
 export const useRoomStore = create<RoomState>((set, get) => {
   let bound: GameSocket | null = null;
   /** While true, connect errors are reported to the sign-in form instead of signing out. */
   let signingIn = false;
 
-  const showRoom = (room: ChatRoomView) => set({ room, messages: room.state.messages.slice(-MAX_MESSAGES) });
+  const showRoom = (room: ChatRoomView) =>
+    set({ roomId: room.id, room, messages: room.state.messages.slice(-MAX_MESSAGES) });
 
   const socket = (): GameSocket => {
     if (bound) return bound;
@@ -71,7 +76,8 @@ export const useRoomStore = create<RoomState>((set, get) => {
         user: { userId: session.userId, name: session.name },
         sessionToken: session.sessionToken,
       });
-      if (!session.roomId) set(NO_ROOM); // e.g. the room expired or the server restarted
+      // No room: e.g. it expired or the server restarted. Otherwise `room:state` follows.
+      set(session.roomId ? { ready: true, roomId: session.roomId } : { ready: true, ...NO_ROOM });
     });
     // Full snapshot of our room: the source of truth.
     s.on("room:state", (room) => showRoom(room as ChatRoomView));
@@ -97,7 +103,7 @@ export const useRoomStore = create<RoomState>((set, get) => {
       if (!isAuthError) return set({ connection: signingIn ? "connecting" : "reconnecting" });
 
       s.disconnect();
-      set({ ...NO_ROOM, connection: "idle" });
+      set({ ...NO_ROOM, ready: false, connection: "idle" });
       // Sign-in form shows the error itself; otherwise (e.g. reconnecting after the name
       // was taken while we were away) go back to the sign-in form with a notice.
       if (!signingIn) {
@@ -125,6 +131,7 @@ export const useRoomStore = create<RoomState>((set, get) => {
 
   return {
     connection: "idle",
+    ready: false,
     ...NO_ROOM,
     pending: false,
     error: null,
@@ -205,7 +212,7 @@ export const useRoomStore = create<RoomState>((set, get) => {
       // Leave right away so the name is free immediately (not after the reconnect grace period).
       if (s.connected && get().room) await request("room:leave").catch(() => {});
       s.disconnect();
-      set({ ...NO_ROOM, connection: "idle", error: null, notice: null });
+      set({ ...NO_ROOM, ready: false, connection: "idle", error: null, notice: null });
       useAuthStore.getState().clearSession();
     },
 
