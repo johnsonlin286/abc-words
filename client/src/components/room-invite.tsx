@@ -1,27 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { isRoomCode } from "@/shared/game";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore } from "@/stores/room-store";
 import JoinRoomForm from "./join-room-form";
+import { useLiveRoomData } from "./room-list";
 
 const noop = () => {};
 
 /** Join form for someone who opened /room/[code] without being a member yet. */
 export default function RoomInvite({ code }: { code: string }) {
-  const router = useRouter();
   const name = useAuthStore((s) => s.user?.name);
   const clearError = useRoomStore((s) => s.clearError);
 
   useEffect(() => clearError(), [clearError]);
-
-  const backToLobby = () => {
-    clearError();
-    router.push("/");
-  };
+  useLiveRoomData();
 
   return (
     <div className="w-full max-w-sm space-y-5 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
@@ -33,22 +28,18 @@ export default function RoomInvite({ code }: { code: string }) {
       </div>
 
       {isRoomCode(code) ? (
-        <JoinRoomForm
-          code={code}
-          onCodeChange={noop}
-          codeLocked
-          onUnlockCode={backToLobby}
-          unlockLabel="Kembali ke lobby"
-          selectionId={1}
-        />
+        <JoinRoomForm code={code} onCodeChange={noop} codeLocked selectionId={1} />
       ) : (
-        <div className="space-y-2 text-sm">
-          <p className="text-red-600">Kode room tidak valid.</p>
-          <Link href="/" className="text-blue-600 hover:underline">
-            Kembali ke lobby
-          </Link>
-        </div>
+        <p className="text-sm text-red-600">Kode room tidak valid.</p>
       )}
+
+      <Link
+        href="/"
+        onClick={clearError}
+        className="block w-full rounded-md border border-zinc-300 px-4 py-2 text-center text-sm font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+      >
+        Kembali ke beranda
+      </Link>
     </div>
   );
 }

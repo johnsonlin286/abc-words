@@ -2,8 +2,8 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import GameScreen from "@/features/game/game-screen";
 import { useRoomStore } from "@/stores/room-store";
-import ChatRoom from "./chat-room";
 import ConnectingNotice from "./connecting-notice";
 import RoomInvite from "./room-invite";
 
@@ -32,5 +32,5 @@ export default function RoomRoute() {
   }, [redirectTo, router]);
 
   if (!ready || redirectTo || (isMember && !roomLoaded)) return <ConnectingNotice />;
-  return isMember ? <ChatRoom /> : <RoomInvite code={code} />;
+  return isMember ? <GameScreen /> : <RoomInvite code={code} />;
 }

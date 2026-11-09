@@ -24,12 +24,30 @@ export function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
   );
 }
 
-export default function RoomList({ onSelect }: Props) {
-  const queryClient = useQueryClient();
-  const rooms = useQuery({ queryKey: ["rooms"], queryFn: listRooms, retry: false });
+/** Where a room stands for someone in the lobby. Only rooms that haven't started and have space can be joined. */
+export function getRoomStatus(room: RoomSummary): { label: string; dot: string; joinable: boolean } {
+  if (room.locked) return { label: "Sedang bermain", dot: "bg-amber-500", joinable: false };
+  if (room.memberCount >= room.maxMembers) return { label: "Ruangan penuh", dot: "bg-red-500", joinable: false };
+  return { label: "Belum mulai", dot: "bg-emerald-500", joinable: true };
+}
 
-  // The server pushes "rooms:changed" whenever the lobby list changes (room created/closed,
-  // player joined/left, host changed); refetch the list and the join-form preview then.
+export function RoomStatusLabel({ room }: { room: RoomSummary }) {
+  const status = getRoomStatus(room);
+  return (
+    <span className="flex shrink-0 items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
+      <span aria-hidden className={`h-2 w-2 rounded-full ${status.dot}`} />
+      {status.label}
+    </span>
+  );
+}
+
+/**
+ * Keeps room data fresh on any page that shows it: the server pushes "rooms:changed"
+ * whenever a room is created/closed, players join/leave, or a game starts/ends.
+ */
+export function useLiveRoomData() {
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     const s = getGameSocket();
     const refresh = () => {
@@ -43,6 +61,11 @@ export default function RoomList({ onSelect }: Props) {
       s.off("connect", refresh);
     };
   }, [queryClient]);
+}
+
+export default function RoomList({ onSelect }: Props) {
+  const rooms = useQuery({ queryKey: ["rooms"], queryFn: listRooms, retry: false });
+  useLiveRoomData();
 
   return (
     <section className="w-full max-w-sm space-y-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
@@ -69,23 +92,25 @@ export default function RoomList({ onSelect }: Props) {
       {rooms.data && rooms.data.length > 0 && (
         <ul className="max-h-80 space-y-2 overflow-y-auto">
           {rooms.data.map((room) => {
-            const full = room.memberCount >= room.maxMembers || room.locked;
+            const { joinable } = getRoomStatus(room);
             return (
               <li key={room.id}>
                 <button
                   type="button"
-                  disabled={full}
+                  disabled={!joinable}
                   onClick={() => onSelect(room)}
-                  className="flex w-full items-center gap-3 rounded-md border border-zinc-200 px-3 py-2 text-left transition-colors hover:border-blue-500 hover:bg-blue-50/50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-zinc-200 disabled:hover:bg-transparent dark:border-zinc-800 dark:hover:bg-blue-950/20"
+                  className="flex w-full items-center gap-3 rounded-md border border-zinc-200 px-3 py-2 text-left transition-colors hover:border-blue-500 hover:bg-blue-50/50 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:hover:border-zinc-200 dark:disabled:bg-zinc-900 disabled:hover:bg-transparent dark:border-zinc-800 dark:hover:bg-blue-950/20"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="font-mono text-sm font-semibold tracking-widest">{room.id}</p>
                     <p className="truncate text-xs text-zinc-500">
                       Host: {room.hostName ?? "—"} · {room.memberCount}/{room.maxMembers} pemain
-                      {full && " · penuh"}
                     </p>
                   </div>
-                  <VisibilityBadge isPrivate={room.hasPassword} />
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <VisibilityBadge isPrivate={room.hasPassword} />
+                    <RoomStatusLabel room={room} />
+                  </div>
                 </button>
               </li>
             );

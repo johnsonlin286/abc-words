@@ -8,7 +8,8 @@ import {
   ROOM_TYPE,
   UNAUTHORIZED,
   type ChatMessage,
-  type ChatState,
+  type GameSettings,
+  type GameState,
 } from "@/shared/game";
 import { useAuthStore } from "./auth-store";
 
@@ -16,7 +17,15 @@ const SIGN_IN_TIMEOUT = 5000;
 const MAX_MESSAGES = 200;
 
 export type Connection = "idle" | "connecting" | "online" | "reconnecting";
-export type ChatRoomView = RoomView<ChatState>;
+export type GameRoomView = RoomView<GameState, GameSettings>;
+export type AnswerOutcome =
+  | { status: "accepted" }
+  | { status: "duplicate" | "near-tie" | "error"; message: string };
+
+const ANSWER_MESSAGES = {
+  duplicate: "Kata itu sudah dijawab pemain lain. Coba kata lain.",
+  "near-tie": "Keduluan! Kata itu baru saja masuk. Waktumu ditambah, coba kata lain.",
+};
 
 type RoomState = {
   connection: Connection;
@@ -24,8 +33,10 @@ type RoomState = {
   ready: boolean;
   /** The room the server says we are in. Routes navigate from this, not from user actions. */
   roomId: string | null;
-  room: ChatRoomView | null;
+  room: GameRoomView | null;
   messages: ChatMessage[];
+  /** Local time at which the current game phase ends; null when it has no limit. */
+  phaseEndsAt: number | null;
   pending: boolean;
   error: string | null;
   /** Shown in the lobby after being kicked / the room closing. */
@@ -36,6 +47,14 @@ type RoomState = {
   start: () => void;
   createRoom: (input: { isPrivate: boolean; password?: string }) => Promise<boolean>;
   joinRoom: (input: { roomId: string; password?: string }) => Promise<boolean>;
+  /** Host only. Resolves with an error message, or null when saved. */
+  updateSettings: (patch: Partial<GameSettings>) => Promise<string | null>;
+  /** Host only. Resolve with an error message, or null on success. */
+  startGame: () => Promise<string | null>;
+  endGame: () => Promise<string | null>;
+  pickNumber: (value: number) => Promise<string | null>;
+  submitAnswer: (text: string) => Promise<AnswerOutcome>;
+  setRejection: (answerUserId: string, rejected: boolean) => Promise<string | null>;
   sendMessage: (text: string) => Promise<boolean>;
   leaveRoom: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -56,15 +75,20 @@ function mergeMessage(list: ChatMessage[], msg: ChatMessage): ChatMessage[] {
   return list.some((m) => m.id === msg.id) ? list : [...list, msg].slice(-MAX_MESSAGES);
 }
 
-const NO_ROOM = { roomId: null, room: null, messages: [] as ChatMessage[] };
+const NO_ROOM = { roomId: null, room: null, messages: [] as ChatMessage[], phaseEndsAt: null };
 
 export const useRoomStore = create<RoomState>((set, get) => {
   let bound: GameSocket | null = null;
   /** While true, connect errors are reported to the sign-in form instead of signing out. */
   let signingIn = false;
 
-  const showRoom = (room: ChatRoomView) =>
-    set({ roomId: room.id, room, messages: room.state.messages.slice(-MAX_MESSAGES) });
+  const showRoom = (room: GameRoomView) =>
+    set({
+      roomId: room.id,
+      room,
+      messages: room.state.messages.slice(-MAX_MESSAGES),
+      phaseEndsAt: room.state.remainingMs === null ? null : Date.now() + room.state.remainingMs,
+    });
 
   const socket = (): GameSocket => {
     if (bound) return bound;
@@ -80,7 +104,7 @@ export const useRoomStore = create<RoomState>((set, get) => {
       set(session.roomId ? { ready: true, roomId: session.roomId } : { ready: true, ...NO_ROOM });
     });
     // Full snapshot of our room: the source of truth.
-    s.on("room:state", (room) => showRoom(room as ChatRoomView));
+    s.on("room:state", (room) => showRoom(room as GameRoomView));
     s.on("room:event", ({ roomId, event, data }) => {
       if (event !== "chat:message" || roomId !== get().room?.id) return;
       set((st) => ({ messages: mergeMessage(st.messages, data as ChatMessage) }));
@@ -119,13 +143,23 @@ export const useRoomStore = create<RoomState>((set, get) => {
   const enter = async (run: () => Promise<RoomView>): Promise<boolean> => {
     set({ pending: true, error: null, notice: null });
     try {
-      showRoom((await run()) as ChatRoomView);
+      showRoom((await run()) as GameRoomView);
       return true;
     } catch (e) {
       set({ error: errorMessage(e) });
       return false;
     } finally {
       set({ pending: false });
+    }
+  };
+
+  // The new phase arrives through `room:state`.
+  const gameAction = async (action: string, payload?: unknown): Promise<string | null> => {
+    try {
+      await request("room:action", { action, ...(payload !== undefined && { payload }) });
+      return null;
+    } catch (e) {
+      return errorMessage(e);
     }
   };
 
@@ -189,6 +223,36 @@ export const useRoomStore = create<RoomState>((set, get) => {
 
     joinRoom: ({ roomId, password }) =>
       enter(() => request("room:join", { roomId, ...(password && { password }) })),
+
+    updateSettings: async (patch) => {
+      const before = get().room;
+      if (!before) return "Kamu tidak sedang berada di room.";
+      // Applied right away so quick repeated clicks build on each other.
+      set({ room: { ...before, settings: { ...before.settings, ...patch } } });
+      try {
+        await request("room:update", { settings: patch });
+        return null; // the saved settings arrive through `room:state`
+      } catch (e) {
+        set((st) => (st.room ? { room: { ...st.room, settings: before.settings } } : {}));
+        return errorMessage(e);
+      }
+    },
+
+    startGame: () => gameAction("start"),
+    endGame: () => gameAction("end"),
+    pickNumber: (value) => gameAction("pick", { value }),
+    setRejection: (answerUserId, rejected) => gameAction("reject", { answerUserId, rejected }),
+
+    submitAnswer: async (text) => {
+      try {
+        const { status } = (await request("room:action", { action: "answer", payload: { text } })) as {
+          status: "accepted" | "duplicate" | "near-tie";
+        };
+        return status === "accepted" ? { status } : { status, message: ANSWER_MESSAGES[status] };
+      } catch (e) {
+        return { status: "error", message: errorMessage(e) };
+      }
+    },
 
     sendMessage: async (text) => {
       try {

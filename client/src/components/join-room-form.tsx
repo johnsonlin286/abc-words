@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { getRoomSummary } from "@/lib/api";
 import { LIMITS } from "@/shared/game";
 import { useRoomStore } from "@/stores/room-store";
-import { VisibilityBadge } from "./room-list";
+import { getRoomStatus, RoomStatusLabel, VisibilityBadge } from "./room-list";
 
 const inputClass =
   "w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700";
@@ -15,9 +15,8 @@ type Props = {
   onCodeChange: (value: string) => void;
   /** Room was picked from the list: hide the code input, show only the room card. */
   codeLocked: boolean;
-  onUnlockCode: () => void;
-  /** Text of the link that calls `onUnlockCode`. */
-  unlockLabel?: string;
+  /** Offers a way to type another code; only used when `codeLocked`. */
+  onUnlockCode?: () => void;
   /** Changes every time a room is picked from the list, to move focus. */
   selectionId: number;
 };
@@ -27,7 +26,6 @@ export default function JoinRoomForm({
   onCodeChange,
   codeLocked,
   onUnlockCode,
-  unlockLabel = "Pakai kode lain",
   selectionId,
 }: Props) {
   const joinRoom = useRoomStore((s) => s.joinRoom);
@@ -50,7 +48,7 @@ export default function JoinRoomForm({
   });
 
   const room = preview.data;
-  const isFull = room ? room.memberCount >= room.maxMembers : false;
+  const joinable = room ? getRoomStatus(room).joinable : false;
   const needsPassword = room?.hasPassword ?? false;
 
   // After picking a private room from the list, jump to the password field
@@ -112,26 +110,29 @@ export default function JoinRoomForm({
                 <p className="truncate">
                   Host: <span className="font-medium">{room.hostName ?? "—"}</span>
                 </p>
-                <p className={`text-xs ${isFull ? "text-red-600" : "text-zinc-500"}`}>
-                  {room.memberCount}/{room.maxMembers} pemain{isFull && " — penuh"}
+                <p className="text-xs text-zinc-500">
+                  {room.memberCount}/{room.maxMembers} pemain
                 </p>
               </div>
-              <VisibilityBadge isPrivate={room.hasPassword} />
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <VisibilityBadge isPrivate={room.hasPassword} />
+                <RoomStatusLabel room={room} />
+              </div>
             </div>
           )}
-          {codeLocked && (
+          {codeLocked && onUnlockCode && (
             <button
               type="button"
               onClick={onUnlockCode}
               className="mt-1 text-xs text-blue-600 hover:underline"
             >
-              {unlockLabel}
+              Pakai kode lain
             </button>
           )}
         </div>
       )}
 
-      {needsPassword && (
+      {needsPassword && joinable && (
         <label className="block space-y-1">
           <span className="text-sm font-medium">
             Kata sandi <span className="text-red-500">*</span>
@@ -152,7 +153,7 @@ export default function JoinRoomForm({
 
       <button
         type="submit"
-        disabled={pending || !room || isFull}
+        disabled={pending || !joinable}
         className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
       >
         {pending ? "Bergabung…" : "Gabung room"}
