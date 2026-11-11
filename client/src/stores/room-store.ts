@@ -10,6 +10,7 @@ import {
   type ChatMessage,
   type GameSettings,
   type GameState,
+  type RejectReason,
 } from "@/shared/game";
 import { useAuthStore } from "./auth-store";
 
@@ -54,7 +55,8 @@ type RoomState = {
   endGame: () => Promise<string | null>;
   pickNumber: (value: number) => Promise<string | null>;
   submitAnswer: (text: string) => Promise<AnswerOutcome>;
-  setRejection: (answerUserId: string, rejected: boolean) => Promise<string | null>;
+  /** Reject with a reason (or change the reason); `null` cancels the rejection. */
+  setRejection: (answerUserId: string, reason: RejectReason | null) => Promise<string | null>;
   sendMessage: (text: string) => Promise<boolean>;
   leaveRoom: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -241,7 +243,8 @@ export const useRoomStore = create<RoomState>((set, get) => {
     startGame: () => gameAction("start"),
     endGame: () => gameAction("end"),
     pickNumber: (value) => gameAction("pick", { value }),
-    setRejection: (answerUserId, rejected) => gameAction("reject", { answerUserId, rejected }),
+    setRejection: (answerUserId, reason) =>
+      gameAction("reject", reason ? { answerUserId, rejected: true, reason } : { answerUserId, rejected: false }),
 
     submitAnswer: async (text) => {
       try {

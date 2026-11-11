@@ -1,5 +1,12 @@
 import type { GameRoomView } from "@/stores/room-store";
 import RoundHeader from "./round-header";
+import { RejectedBy } from "./voting-phase";
+
+function pointsLabel(accepted: boolean | null, points: number | null): string {
+  const value = points ?? 0;
+  const sign = value > 0 ? "+" : value < 0 ? "−" : "";
+  return `${accepted ? "Lolos" : "Gugur"} ${sign}${Math.abs(value)}`;
+}
 
 export default function ResultPhase({ room, letter }: { room: GameRoomView; letter: string }) {
   const { answers } = room.state;
@@ -14,19 +21,19 @@ export default function ResultPhase({ room, letter }: { room: GameRoomView; lett
       ) : (
         <ol className="space-y-2">
           {answers.map((a) => (
-            <li key={a.userId} className="flex items-center justify-between gap-3 rounded-md bg-board-deep px-3 py-2">
-              <div className="min-w-0">
-                <p className={`font-medium break-words ${a.accepted ? "text-chalk" : "text-chalk-dim line-through"}`}>
-                  {a.text}
-                </p>
-                <p className="text-xs text-chalk-dim">
-                  {a.name}
-                  {a.rejectedBy.length > 0 && `. Ditolak oleh ${a.rejectedBy.map((r) => r.name).join(", ")}`}
+            <li key={a.userId} className="rounded-md bg-board-deep px-3 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className={`font-medium break-words ${a.accepted ? "text-chalk" : "text-chalk-dim line-through"}`}>
+                    {a.text}
+                  </p>
+                  <p className="text-xs text-chalk-dim">{a.name}</p>
+                </div>
+                <p className={`shrink-0 text-sm font-medium ${a.accepted ? "text-chalk-yellow" : "text-chalk-dim"}`}>
+                  {pointsLabel(a.accepted, a.points)}
                 </p>
               </div>
-              <p className={`shrink-0 text-sm font-medium ${a.accepted ? "text-chalk-yellow" : "text-chalk-dim"}`}>
-                {a.accepted ? "Lolos +1" : "Gugur 0"}
-              </p>
+              <RejectedBy answer={a} />
             </li>
           ))}
         </ol>

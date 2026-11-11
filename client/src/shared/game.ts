@@ -35,6 +35,18 @@ export const CATEGORIES = [
   { id: "custom", label: "Lainnya" },
 ] as const;
 
+/** Alasan menolak jawaban; id sama dengan `REJECT_REASONS` di backend/src/modules/abc-words. */
+export const REJECT_REASONS = [
+  { id: "off-category", label: "Bukan kategori" },
+  { id: "misspelled", label: "Salah ejaan" },
+  { id: "not-a-word", label: "Kata tidak ada" },
+] as const;
+export type RejectReason = (typeof REJECT_REASONS)[number]["id"];
+
+export function rejectReasonLabel(reason: RejectReason): string {
+  return REJECT_REASONS.find((r) => r.id === reason)?.label ?? reason;
+}
+
 export const LANGUAGES = [
   { id: "id", label: "Indonesia" },
   { id: "en", label: "English" },
@@ -77,12 +89,14 @@ export type GameState = ChatState & {
     name: string;
     text: string;
     at: number;
-    rejectedBy: { userId: string; name: string }[];
+    rejectedBy: { userId: string; name: string; reason: RejectReason }[];
     /** Voting result; null until voting ends. */
     accepted: boolean | null;
+    /** Score change: +1 accepted, -1 rejected (0 when the score was already 0). Null until voting ends. */
+    points: number | null;
   }[];
   scores: Record<string, number>;
-  /** How many answers this player can still reject in this game. */
+  /** How many answers this player can still reject in this game. Rejections that won are refunded. */
   rejectionsLeft: number;
 };
 
