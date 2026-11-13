@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { LIMITS } from "@/shared/game";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore } from "@/stores/room-store";
+import { useTimeLeft } from "./countdown";
+
+/** "1:42" for a mute countdown. */
+function clock(ms: number): string {
+  const total = Math.ceil(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
 
 type PanelSize = "max" | "small" | "closed";
 
@@ -15,6 +22,8 @@ export default function ChatPanel() {
   const error = useRoomStore((s) => s.error);
   const sendMessage = useRoomStore((s) => s.sendMessage);
   const connection = useRoomStore((s) => s.connection);
+  const mutedMs = useTimeLeft(useRoomStore((s) => s.chatMutedUntil)) ?? 0;
+  const muted = mutedMs > 0;
 
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -31,7 +40,7 @@ export default function ChatPanel() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const value = text.trim();
-    if (!value || sending) return;
+    if (!value || sending || muted) return;
     setSending(true);
     if (await sendMessage(value)) setText("");
     setSending(false);
@@ -106,6 +115,11 @@ export default function ChatPanel() {
         <p className="px-4 text-xs text-amber-600">Koneksi terputus, menghubungkan ulang…</p>
       )}
       {error && <p className="px-4 text-xs text-red-600">{error}</p>}
+      {muted && (
+        <p role="status" className="px-4 text-xs text-amber-600">
+          Kamu dibisukan karena spam. Bisa mengirim pesan lagi dalam {clock(mutedMs)}.
+        </p>
+      )}
 
       <form onSubmit={handleSend} className="flex gap-2 border-t border-zinc-200 p-3 dark:border-zinc-800">
         <input
@@ -114,11 +128,12 @@ export default function ChatPanel() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={LIMITS.message}
-          placeholder="Tulis pesan…"
+          placeholder={muted ? `Dibisukan · ${clock(mutedMs)}` : "Tulis pesan…"}
+          disabled={muted}
         />
         <button
           type="submit"
-          disabled={!text.trim() || sending}
+          disabled={!text.trim() || sending || muted}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
           Kirim

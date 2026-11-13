@@ -4,6 +4,7 @@ import { useState } from "react";
 import { VisibilityBadge } from "@/components/room-list";
 import { copyText } from "@/lib/clipboard";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
+import RulesDialog from "./rules-dialog";
 
 const actionClass = "text-sm text-chalk-dim underline-offset-2 hover:text-chalk hover:underline";
 
@@ -25,6 +26,7 @@ export default function RoomBar({ room }: { room: GameRoomView }) {
       </h1>
       <VisibilityBadge isPrivate={room.hasPassword} />
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:ml-auto">
+        <RulesDialog className={actionClass} />
         <button type="button" className={actionClass} onClick={() => copy("code", room.id)}>
           {copied === "code" ? "Kode tersalin" : "Salin kode"}
         </button>

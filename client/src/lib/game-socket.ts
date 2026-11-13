@@ -25,11 +25,12 @@ export function getGameSocket(): GameSocket {
   return socket;
 }
 
-/** Error with the server's error `code` (e.g. "INVALID_PASSWORD"). */
+/** Error with the server's error `code` (e.g. "INVALID_PASSWORD") and optional `details`. */
 export class RequestError extends Error {
   constructor(
     readonly code: string,
     message: string,
+    readonly details?: unknown,
   ) {
     super(message);
   }
@@ -55,6 +56,6 @@ export async function request<E extends AckEvent>(event: E, ...payload: Payload<
   } catch {
     throw new RequestError("TIMEOUT", "Server tidak merespons.");
   }
-  if (!res.ok) throw new RequestError(res.error.code, res.error.message);
+  if (!res.ok) throw new RequestError(res.error.code, res.error.message, res.error.details);
   return res.data;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { copyText } from "@/lib/clipboard";
 import type { RoomSummary } from "@/shared/contract";
@@ -66,6 +67,10 @@ export default function Lobby() {
             <button type="button" onClick={signOut} className="text-blue-600 hover:underline">
               ganti nama
             </button>
+            {" · "}
+            <Link href="/cara-main" className="text-blue-600 hover:underline">
+              cara main
+            </Link>
           </p>
           {connection === "reconnecting" && (
             <p className="mt-1 text-xs text-amber-600">Menghubungkan ulang ke server…</p>

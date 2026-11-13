@@ -25,6 +25,33 @@ export const CUSTOM_CATEGORY_MAX = 40;
 export const ANSWER_MIN = 2;
 export const ANSWER_MAX = 40;
 
+/** Same values as `POINTS` in backend/src/modules/abc-words. Scores never go below 0. */
+export const POINTS = { accepted: 1, rejected: -2, noAnswer: -1, loneRejection: -1 } as const;
+/** Same as `AFK_ROUNDS` in backend/src/modules/abc-words: rounds in a row without picking or answering. */
+export const AFK_ROUNDS = 2;
+
+/** Lone rejections per game that only get a warning (yellow card); after that each costs points. */
+export const LONE_REJECTION_WARNINGS = 2;
+
+/** Rejection quota per game; 2-player games get 1. */
+export const REJECTIONS = { normal: 3, twoPlayers: 1 } as const;
+/** Phase lengths for the rules page; same as `DEFAULT_TIMING` in backend/src/modules/abc-words. */
+export const PICK_MS = 10_000;
+export const ANSWER_MS = 30_000;
+export const LAST_PLAYER_MS = 10_000;
+export const VOTING_MS = 20_000;
+/** Same as `ANSWER_RETRY_LIMIT`, `retryWindowMs` and `retryCooldownMs` in backend/src/modules/abc-words. */
+export const ANSWER_RETRY_LIMIT = 3;
+export const ANSWER_RETRY_WINDOW_MS = 5_000;
+export const ANSWER_RETRY_COOLDOWN_MS = 3_000;
+/** Same as `DEFAULT_CHAT_SPAM_RULES` in backend/src/modules/chat/spam-guard.ts (rules page only). */
+export const CHAT_SPAM = { floodLimit: 5, floodWindowMs: 10_000, repeatLimit: 3, muteMs: 2 * 60_000 } as const;
+
+/** "+1", "−2", "0": signed with a real minus sign. */
+export function formatPoints(points: number): string {
+  return points > 0 ? `+${points}` : points < 0 ? `−${Math.abs(points)}` : "0";
+}
+
 export const CATEGORIES = [
   { id: "bebas", label: "Bebas" },
   { id: "hewan", label: "Hewan" },
@@ -98,6 +125,30 @@ export type GameState = ChatState & {
   scores: Record<string, number>;
   /** How many answers this player can still reject in this game. Rejections that won are refunded. */
   rejectionsLeft: number;
+  /** Rejections per player for this game: 1 in a 2-player game, otherwise 3. */
+  rejectionLimit: number;
+  /** Players who pressed "Selesai menilai" this round. */
+  votingDone: string[];
+  /** Point deductions this round other than the player's own answer; filled when the result is shown. */
+  penalties: Penalty[];
+  /** Lone rejections per player in this game (public). */
+  loneRejections: Record<string, number>;
+  /** Rounds in a row each player neither picked nor answered; see `AFK_ROUNDS`. */
+  idleRounds: Record<string, number>;
+};
+
+export type Penalty = {
+  userId: string;
+  name: string;
+  reason: "no-answer" | "lone-rejection";
+  /** The answer rejected alone; null for "no-answer". */
+  answerText: string | null;
+  /** Which lone rejection this is in the game; null for "no-answer". */
+  strike: number | null;
+  /** True when it is only a warning (yellow card), with no points taken. */
+  warning: boolean;
+  /** Actual score change (0 when the score was already 0). */
+  points: number;
 };
 
 export type RevealInfo = {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import Link from "next/link";
 import { useState } from "react";
 import {
   LIMITS,
@@ -95,6 +96,11 @@ export default function SignInForm() {
 
       <p className="text-xs text-zinc-400">
         Sesi tersimpan di tab ini saja dan hilang saat tab ditutup.
+      </p>
+      <p className="text-sm">
+        <Link href="/cara-main" className="text-blue-600 hover:underline">
+          Belum tahu cara mainnya? Baca aturannya
+        </Link>
       </p>
     </form>
   );

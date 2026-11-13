@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore } from "@/stores/room-store";
+import { AfkNotice, isAfk } from "./afk";
 import AlphabetStrip from "./alphabet-strip";
 import AnsweringPhase from "./answering-phase";
 import ChatPanel from "./chat-panel";
@@ -49,6 +50,7 @@ export default function GameScreen() {
       <section className="space-y-6 bg-board p-5 sm:p-7">
         <RoomBar room={room} />
         <AlphabetStrip used={crossedOut} />
+        {phase !== "waiting" && phase !== "finished" && isAfk(room.state, myId) && <AfkNotice />}
         {phase === "waiting" && <WaitingRoom room={room} myId={myId} />}
         {phase === "picking" && <PickingPhase room={room} />}
         {phase === "reveal" && reveal && <RevealPhase key={round} room={room} reveal={reveal} />}

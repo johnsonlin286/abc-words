@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { categoryLabel } from "@/shared/game";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
-import Countdown from "./countdown";
+import Countdown, { useTimeLeft } from "./countdown";
 import { chalkFont } from "./fonts";
 
 const NUMBERS = Array.from({ length: 10 }, (_, i) => i + 1);
 const FINGER_HEIGHTS = [9, 13, 15, 13, 8];
+/** Warn a player who hasn't picked once this little time is left. */
+const HURRY_MS = 3_000;
 
 /** Up to two small chalk hands, one stroke per raised finger. */
 function Fingers({ count }: { count: number }) {
@@ -29,8 +31,10 @@ export default function PickingPhase({ room }: { room: GameRoomView }) {
   const endsAt = useRoomStore((s) => s.phaseEndsAt);
   const [error, setError] = useState<string | null>(null);
 
-  const { myPick, pickedBy, round } = room.state;
+  const { myPick, round } = room.state;
   const handlePick = async (value: number) => setError(await pickNumber(value));
+  const left = useTimeLeft(endsAt);
+  const hurry = myPick === null && left !== null && left <= HURRY_MS;
 
   return (
     <div className="space-y-4">
@@ -41,7 +45,12 @@ export default function PickingPhase({ room }: { room: GameRoomView }) {
         <p className="text-sm text-chalk-dim">Kategori: {categoryLabel(room.settings)}</p>
       </div>
 
-      {endsAt !== null && room.state.phaseMs !== null && <Countdown endsAt={endsAt} totalMs={room.state.phaseMs} />}
+      {endsAt !== null && room.state.phaseMs !== null && (
+        <Countdown endsAt={endsAt} totalMs={room.state.phaseMs} urgent={hurry} />
+      )}
+      <p role="status" className={`text-sm font-medium text-chalk-pink ${hurry ? "" : "sr-only"}`}>
+        {hurry ? "Cepat pilih! Kalau tidak, angkamu dipilihkan acak." : ""}
+      </p>
 
       <div>
         <p className="mb-2 text-sm text-chalk">Tunjukkan angkamu</p>
@@ -67,16 +76,6 @@ export default function PickingPhase({ room }: { room: GameRoomView }) {
         {error && <p className="mt-2 text-sm text-chalk-yellow">{error}</p>}
       </div>
 
-      <ul aria-label="Status pemain" className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-        {room.members.map((m) => {
-          const picked = pickedBy.includes(m.userId);
-          return (
-            <li key={m.userId} className={picked ? "text-chalk" : "text-chalk-dim"}>
-              {m.name}: {!m.isConnected ? "terputus" : picked ? "sudah memilih" : "belum memilih"}
-            </li>
-          );
-        })}
-      </ul>
     </div>
   );
 }

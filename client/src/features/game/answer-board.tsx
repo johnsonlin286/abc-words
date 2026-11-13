@@ -1,10 +1,9 @@
 import type { GameRoomView } from "@/stores/room-store";
 import { chalkFont } from "./fonts";
 
-/** Answers so far, plus the players still expected to answer. */
+/** Answers so far. */
 export default function AnswerBoard({ room }: { room: GameRoomView }) {
   const { answers } = room.state;
-  const notAnswered = room.members.filter((m) => !answers.some((a) => a.userId === m.userId));
 
   return (
     <section aria-labelledby="answers-heading" className="space-y-2">
@@ -23,12 +22,6 @@ export default function AnswerBoard({ room }: { room: GameRoomView }) {
             </li>
           ))}
         </ol>
-      )}
-
-      {notAnswered.length > 0 && (
-        <p className="text-sm text-chalk-dim">
-          Belum menjawab: {notAnswered.map((m) => (m.isConnected ? m.name : `${m.name} (terputus)`)).join(", ")}
-        </p>
       )}
     </section>
   );

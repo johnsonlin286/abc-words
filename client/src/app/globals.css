@@ -17,6 +17,7 @@
   --color-chalk: #f1efe6;
   --color-chalk-dim: #b9c7bd;
   --color-chalk-yellow: #f6d860;
+  --color-chalk-pink: #f4a7a0;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getGameSocket, request, type GameSocket } from "@/lib/game-socket";
+import { RequestError, getGameSocket, request, type GameSocket } from "@/lib/game-socket";
 import type { RoomView } from "@/shared/contract";
 import {
   INVALID_NAME,
@@ -19,9 +19,16 @@ const MAX_MESSAGES = 200;
 
 export type Connection = "idle" | "connecting" | "online" | "reconnecting";
 export type GameRoomView = RoomView<GameState, GameSettings>;
+/** `retryAfterMs`: too many rejected answers; the server accepts no answer until then. */
 export type AnswerOutcome =
   | { status: "accepted" }
-  | { status: "duplicate" | "near-tie" | "error"; message: string };
+  | { status: "duplicate" | "near-tie" | "error"; message: string; retryAfterMs?: number };
+
+/** The pause length the server attaches to a rejected answer, if any. */
+function retryAfter(source: unknown): number | undefined {
+  const value = (source as { retryAfterMs?: unknown } | null | undefined)?.retryAfterMs;
+  return typeof value === "number" && value > 0 ? value : undefined;
+}
 
 const ANSWER_MESSAGES = {
   duplicate: "Kata itu sudah dijawab pemain lain. Coba kata lain.",
@@ -38,6 +45,8 @@ type RoomState = {
   messages: ChatMessage[];
   /** Local time at which the current game phase ends; null when it has no limit. */
   phaseEndsAt: number | null;
+  /** Local time until which this player is muted in chat for spamming; only they see it. */
+  chatMutedUntil: number | null;
   pending: boolean;
   error: string | null;
   /** Shown in the lobby after being kicked / the room closing. */
@@ -57,6 +66,8 @@ type RoomState = {
   submitAnswer: (text: string) => Promise<AnswerOutcome>;
   /** Reject with a reason (or change the reason); `null` cancels the rejection. */
   setRejection: (answerUserId: string, reason: RejectReason | null) => Promise<string | null>;
+  /** Mark (or unmark) this player as done judging; voting ends once every judge is done. */
+  setVotingDone: (done: boolean) => Promise<string | null>;
   sendMessage: (text: string) => Promise<boolean>;
   leaveRoom: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -77,7 +88,37 @@ function mergeMessage(list: ChatMessage[], msg: ChatMessage): ChatMessage[] {
   return list.some((m) => m.id === msg.id) ? list : [...list, msg].slice(-MAX_MESSAGES);
 }
 
-const NO_ROOM = { roomId: null, room: null, messages: [] as ChatMessage[], phaseEndsAt: null };
+/**
+ * The server only reports a chat mute when a message is sent, so the end time is kept in this
+ * tab's session storage: after a refresh the chat can show the countdown right away.
+ */
+const CHAT_MUTE_KEY = "abc-words-chat-mute";
+
+function saveChatMute(roomId: string, until: number): void {
+  try {
+    sessionStorage.setItem(CHAT_MUTE_KEY, JSON.stringify({ roomId, until }));
+  } catch {
+    // Storage unavailable (private mode, quota): the mute shows again on the next send.
+  }
+}
+
+function loadChatMute(roomId: string): number | null {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(CHAT_MUTE_KEY) ?? "null") as { roomId?: unknown; until?: unknown };
+    if (saved?.roomId === roomId && typeof saved.until === "number" && saved.until > Date.now()) return saved.until;
+  } catch {
+    // Missing or unreadable: treat as not muted.
+  }
+  return null;
+}
+
+const NO_ROOM = {
+  roomId: null,
+  room: null,
+  messages: [] as ChatMessage[],
+  phaseEndsAt: null,
+  chatMutedUntil: null,
+};
 
 export const useRoomStore = create<RoomState>((set, get) => {
   let bound: GameSocket | null = null;
@@ -90,6 +131,7 @@ export const useRoomStore = create<RoomState>((set, get) => {
       room,
       messages: room.state.messages.slice(-MAX_MESSAGES),
       phaseEndsAt: room.state.remainingMs === null ? null : Date.now() + room.state.remainingMs,
+      chatMutedUntil: loadChatMute(room.id),
     });
 
   const socket = (): GameSocket => {
@@ -246,14 +288,19 @@ export const useRoomStore = create<RoomState>((set, get) => {
     setRejection: (answerUserId, reason) =>
       gameAction("reject", reason ? { answerUserId, rejected: true, reason } : { answerUserId, rejected: false }),
 
+    setVotingDone: (done) => gameAction("doneVoting", { done }),
+
     submitAnswer: async (text) => {
       try {
-        const { status } = (await request("room:action", { action: "answer", payload: { text } })) as {
+        const data = (await request("room:action", { action: "answer", payload: { text } })) as {
           status: "accepted" | "duplicate" | "near-tie";
+          retryAfterMs?: number;
         };
-        return status === "accepted" ? { status } : { status, message: ANSWER_MESSAGES[status] };
+        if (data.status === "accepted") return { status: "accepted" };
+        return { status: data.status, message: ANSWER_MESSAGES[data.status], retryAfterMs: retryAfter(data) };
       } catch (e) {
-        return { status: "error", message: errorMessage(e) };
+        const details = e instanceof RequestError ? e.details : undefined;
+        return { status: "error", message: errorMessage(e), retryAfterMs: retryAfter(details) };
       }
     },
 
@@ -263,7 +310,16 @@ export const useRoomStore = create<RoomState>((set, get) => {
         set((st) => ({ messages: mergeMessage(st.messages, msg), error: null }));
         return true;
       } catch (e) {
-        set({ error: errorMessage(e) });
+        // A mute is shown by the chat field itself (with a countdown) rather than as an error line.
+        const mutedMs = retryAfter(e instanceof RequestError ? e.details : undefined);
+        if (!mutedMs) {
+          set({ error: errorMessage(e) });
+          return false;
+        }
+        const until = Date.now() + mutedMs;
+        const roomId = get().roomId;
+        if (roomId) saveChatMute(roomId, until);
+        set({ chatMutedUntil: until, error: null });
         return false;
       }
     },

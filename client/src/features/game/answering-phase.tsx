@@ -5,7 +5,7 @@ import { ANSWER_MAX, validateAnswer } from "@/shared/game";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 import AnswerBoard from "./answer-board";
-import Countdown from "./countdown";
+import Countdown, { useTimeLeft } from "./countdown";
 import RoundHeader from "./round-header";
 
 const NO_PASTE_MESSAGE = "Jawaban harus diketik sendiri.";
@@ -15,10 +15,14 @@ function AnswerForm({ letter }: { letter: string }) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [alert, setAlert] = useState<string | null>(null);
+  /** Local time until which the server refuses answers after too many rejected tries. */
+  const [blockedUntil, setBlockedUntil] = useState<number | null>(null);
+  const blockedMs = useTimeLeft(blockedUntil) ?? 0;
+  const blocked = blockedMs > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (sending) return;
+    if (sending || blocked) return;
     const invalid = validateAnswer(text, letter);
     if (invalid) return setAlert(invalid);
 
@@ -27,6 +31,8 @@ function AnswerForm({ letter }: { letter: string }) {
     setSending(false);
 
     if (result.status === "accepted") return;
+    // The pause gets its own line below; the alert still says what was wrong with this answer.
+    if (result.retryAfterMs) setBlockedUntil(Date.now() + result.retryAfterMs);
     setAlert(result.message);
     if (result.status !== "error") setText("");
   };
@@ -58,12 +64,17 @@ function AnswerForm({ letter }: { letter: string }) {
         />
         <button
           type="submit"
-          disabled={sending || !text.trim()}
+          disabled={sending || blocked || !text.trim()}
           className="rounded-md bg-chalk-yellow px-5 py-2 font-medium text-board-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chalk disabled:opacity-50"
         >
-          Kirim
+          {blocked ? `Tunggu ${Math.ceil(blockedMs / 1000)}` : "Kirim"}
         </button>
       </div>
+      {blocked && (
+        <p role="status" className="rounded-md border border-chalk-pink/60 px-3 py-2 text-sm text-chalk">
+          Terlalu banyak jawaban ditolak. Tunggu {Math.ceil(blockedMs / 1000)} detik sebelum mengirim lagi.
+        </p>
+      )}
       {alert && (
         <p role="alert" className="rounded-md border border-chalk-yellow px-3 py-2 text-sm text-chalk">
           {alert}

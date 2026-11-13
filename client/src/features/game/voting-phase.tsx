@@ -1,11 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { REJECT_REASONS, rejectReasonLabel, type GameState, type RejectReason } from "@/shared/game";
+import {
+  LONE_REJECTION_WARNINGS,
+  POINTS,
+  REJECT_REASONS,
+  formatPoints,
+  rejectReasonLabel,
+  type GameState,
+  type RejectReason,
+} from "@/shared/game";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 import Countdown from "./countdown";
+import { isAfk } from "./afk";
 import RoundHeader from "./round-header";
+import { WarningIcon, warningText } from "./warning-badge";
 
 type Answer = GameState["answers"][number];
 
@@ -13,11 +23,21 @@ export default function VotingPhase({ room, letter }: { room: GameRoomView; lett
   const myId = useAuthStore((s) => s.user?.userId);
   const endsAt = useRoomStore((s) => s.phaseEndsAt);
   const setRejection = useRoomStore((s) => s.setRejection);
+  const setVotingDone = useRoomStore((s) => s.setVotingDone);
   const [error, setError] = useState<string | null>(null);
   /** Answer whose reason picker is open before the rejection is sent. */
   const [choosingFor, setChoosingFor] = useState<string | null>(null);
 
-  const { answers, rejectionsLeft, phaseMs } = room.state;
+  const { answers, rejectionsLeft, rejectionLimit, votingDone, phaseMs } = room.state;
+  const twoPlayers = rejectionLimit === 1;
+  // Same rule as the server: online, not AFK, with someone else's answer to judge.
+  const judges = room.members.filter(
+    (m) => m.isConnected && !isAfk(room.state, m.userId) && answers.some((a) => a.userId !== m.userId),
+  );
+  const isJudge = judges.some((m) => m.userId === myId);
+  const iAmDone = myId !== undefined && votingDone.includes(myId);
+  const doneCount = judges.filter((m) => votingDone.includes(m.userId)).length;
+  const myLoneRejections = (myId && room.state.loneRejections[myId]) || 0;
 
   const send = async (answerUserId: string, reason: RejectReason | null) => {
     setChoosingFor(null);
@@ -32,9 +52,18 @@ export default function VotingPhase({ room, letter }: { room: GameRoomView; lett
       <div>
         <h3 className="font-medium text-chalk">Ada jawaban yang tidak sesuai?</h3>
         <p className="text-sm text-chalk-dim">
-          Jawaban yang gugur kehilangan 1 poin. Tolakan yang terbukti benar dikembalikan ke jatahmu. Sisa jatah
-          tolakmu: {rejectionsLeft}.
+          Jawaban yang gugur {formatPoints(POINTS.rejected)} poin.{" "}
+          {twoPlayers
+            ? "Main berdua: jatah tolak hanya 1 per permainan dan tidak dikembalikan."
+            : `Tolakan yang disetujui pemain lain dikembalikan ke jatahmu. Menolak sendirian jawaban yang tetap lolos, mulai kali ke-${LONE_REJECTION_WARNINGS + 1}: ${formatPoints(POINTS.loneRejection)} poin.`}{" "}
+          Sisa jatah tolakmu: {rejectionsLeft}.
         </p>
+        {!twoPlayers && myLoneRejections >= LONE_REJECTION_WARNINGS && (
+          <p className="mt-1 flex items-start gap-1.5 text-sm text-chalk-yellow">
+            <WarningIcon className="mt-0.5 shrink-0" />
+            {warningText(myLoneRejections, null)}
+          </p>
+        )}
       </div>
 
       <ol className="space-y-2">
@@ -95,6 +124,28 @@ export default function VotingPhase({ room, letter }: { room: GameRoomView; lett
           );
         })}
       </ol>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-chalk-dim" aria-live="polite">
+          {isJudge
+            ? `${doneCount} dari ${judges.length} pemain selesai menilai.`
+            : "Menunggu pemain lain menilai jawabanmu."}
+        </p>
+        {isJudge && (
+          <button
+            type="button"
+            aria-pressed={iAmDone}
+            onClick={async () => setError(await setVotingDone(!iAmDone))}
+            className={`rounded-md px-4 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chalk-yellow ${
+              iAmDone
+                ? "border border-chalk-dim/50 text-chalk hover:border-chalk"
+                : "bg-chalk-yellow text-board-deep hover:bg-chalk-yellow/90"
+            }`}
+          >
+            {iAmDone ? "Belum selesai" : "Selesai menilai"}
+          </button>
+        )}
+      </div>
 
       {error && <p className="text-sm text-chalk-yellow">{error}</p>}
     </div>
