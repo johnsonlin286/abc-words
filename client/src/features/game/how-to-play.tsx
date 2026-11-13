@@ -80,7 +80,8 @@ const STEPS = [
     title: "Obrolan",
     body: [
       `Lebih dari ${CHAT_SPAM.floodLimit} pesan dalam ${seconds(CHAT_SPAM.floodWindowMs)}, atau pesan yang sama ${CHAT_SPAM.repeatLimit}× berturut-turut, dianggap spam dan tidak dikirim.`,
-      `Spam lagi setelah diperingatkan: kamu dibisukan ${CHAT_SPAM.muteMs / 60_000} menit. Hanya kamu yang diberi tahu.`,
+      "Pesan yang mengandung kata kasar (bahasa Indonesia, daerah, Inggris, dan beberapa bahasa lain) juga tidak dikirim.",
+      `Melanggar lagi setelah diperingatkan, entah spam atau kata kasar: kamu dibisukan ${CHAT_SPAM.muteMs / 60_000} menit. Hanya kamu yang diberi tahu.`,
     ],
   },
 ];

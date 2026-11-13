@@ -117,7 +117,7 @@ export default function ChatPanel() {
       {error && <p className="px-4 text-xs text-red-600">{error}</p>}
       {muted && (
         <p role="status" className="px-4 text-xs text-amber-600">
-          Kamu dibisukan karena spam. Bisa mengirim pesan lagi dalam {clock(mutedMs)}.
+          Kamu dibisukan karena melanggar aturan chat. Bisa mengirim pesan lagi dalam {clock(mutedMs)}.
         </p>
       )}
 
