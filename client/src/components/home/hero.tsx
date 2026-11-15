@@ -37,10 +37,10 @@ export default function Hero() {
   return (
     <HeroMotion className="flex w-full flex-col gap-10">
       <section aria-labelledby="hero-title" className="flex flex-col gap-10">
-        <div className="flex items-start justify-between gap-8">
+        <div className="relative flex items-start justify-between gap-8">
           <div className="flex min-w-0 flex-col gap-5">
             {/* The logo is the name of the game, so it sits inside the heading instead of a header. */}
-            <h1 id="hero-title" className="text-5xl leading-[1.05] font-bold sm:text-6xl">
+            <h1 id="hero-title" className="pt-14 text-5xl leading-[1.05] font-bold sm:pt-0 sm:text-6xl">
               <span className="block overflow-hidden pb-1">
                 <span data-anim="headline" className="block">
                   Main
@@ -88,7 +88,8 @@ export default function Hero() {
             </p>
           </div>
 
-          <CategoryNote className="mt-2 mr-4 hidden shrink-0 sm:block" />
+          {/* Phones: a smaller note pinned in the corner beside "Main"; tablets: its own column. */}
+          <CategoryNote className="absolute -top-4 right-3 origin-top-right scale-[0.58] sm:relative sm:top-auto sm:right-auto sm:mt-2 sm:mr-4 sm:shrink-0 sm:scale-100" />
         </div>
 
         <div data-anim="cta">

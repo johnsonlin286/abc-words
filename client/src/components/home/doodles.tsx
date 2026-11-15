@@ -39,7 +39,7 @@ const LISTED = ["hewan", "negara", "lagu", "film", "bebas"] as const;
 export function CategoryNote({ className }: { className?: string }) {
   const labels = LISTED.map((id) => CATEGORIES.find((c) => c.id === id)!.label);
   return (
-    <div data-anim="note-card" aria-hidden className={`relative ${className ?? ""}`}>
+    <div data-anim="note-card" aria-hidden className={className ?? "relative"}>
       <div className="note-card relative w-52 rotate-3 px-5 pt-6 pb-5">
         {/* Spiral holes along the top */}
         <span className="absolute inset-x-4 -top-1.5 flex justify-between">
@@ -49,8 +49,8 @@ export function CategoryNote({ className }: { className?: string }) {
         </span>
         <p className="mb-3 inline-block rounded-sm bg-highlight px-2 text-xl font-bold">Kategori</p>
         <ul className="space-y-2">
-          {labels.map((label) => (
-            <li key={label} className="flex items-center gap-2.5 border-b border-paper-line pb-1 font-hand text-lg">
+          {labels.map((label, i) => (
+            <li key={label} className={`${i >= 3 ? "hidden sm:flex" : "flex"} items-center gap-2.5 border-b border-paper-line pb-1 font-hand text-lg`}>
               <span className="relative grid size-5 shrink-0 place-items-center rounded-[4px] border-2 border-ink">
                 <Check data-anim="tick" className="absolute -top-1 -right-1 size-5 text-redpen" strokeWidth={3.5} />
               </span>

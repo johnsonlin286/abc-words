@@ -17,10 +17,22 @@ const kalam = Kalam({
   weight: ["700"],
 });
 
+const description =
+  "Permainan kata legendaris era 90-an, kini online. Hitung jari, dapat huruf, adu kata bareng teman. Tanpa daftar, langsung main!";
+
 export const metadata: Metadata = {
+  // Share previews need absolute image URLs; set SITE_URL to the public address in production.
+  metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
   title: "ABC Lima Dasar",
-  description:
-    "Permainan kata anak tahun 90-an, sekarang online: hitung jari, temukan hurufnya, adu kata paling cepat bareng teman.",
+  description,
+  openGraph: {
+    title: "Main ABC Lima Dasar Online!",
+    description,
+    siteName: "ABC Lima Dasar",
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image", title: "Main ABC Lima Dasar Online!", description },
 };
 
 /** One light theme everywhere; tells browsers not to auto-darken it on dark-mode devices. */

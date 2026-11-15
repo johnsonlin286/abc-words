@@ -137,7 +137,17 @@ export default function Lobby({
         </div>
       </div>
 
-      <RoomList onSelect={selectRoom} />
+      <RoomList
+        onSelect={selectRoom}
+        onCreate={() => {
+          switchTab("create");
+          cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          // The create form mounts on this render; focus its first field once it's there.
+          requestAnimationFrame(() =>
+            cardRef.current?.querySelector<HTMLElement>('[role="tabpanel"] input, [role="tabpanel"] button')?.focus({ preventScroll: true }),
+          );
+        }}
+      />
     </div>
   );
 }

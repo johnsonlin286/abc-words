@@ -17,12 +17,18 @@ export default function HomeActions() {
   const hydrated = useAuthStore((s) => s.hydrated);
   const signedIn = useAuthStore((s) => s.user !== null);
   const [pendingRoom, setPendingRoom] = useState<RoomSummary | null>(null);
+  const [wantsToCreate, setWantsToCreate] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   // Read the guest session from sessionStorage (client only).
   useEffect(() => {
     useAuthStore.persist.rehydrate();
   }, []);
+
+  const focusName = () => {
+    nameRef.current?.focus();
+    nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   // Keeps the layout from jumping while the session is read.
   if (!hydrated) return <div aria-hidden className="h-72" />;
@@ -44,14 +50,21 @@ export default function HomeActions() {
             ? pendingRoom.hasPassword
               ? `Tulis namamu dulu. Setelah itu masukkan kata sandi room ${pendingRoom.id}.`
               : `Tulis namamu dulu, lalu kamu langsung masuk ke room ${pendingRoom.id}.`
-            : null
+            : wantsToCreate
+              ? "Tulis namamu dulu, lalu kamu bisa langsung buat room."
+              : null
         }
       />
       <RoomList
         onSelect={(room) => {
           setPendingRoom(room);
-          nameRef.current?.focus();
-          nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+          focusName();
+        }}
+        onCreate={() => {
+          // After signing in the lobby opens on "Buat room", so only the name is missing.
+          setPendingRoom(null);
+          setWantsToCreate(true);
+          focusName();
         }}
       />
     </div>

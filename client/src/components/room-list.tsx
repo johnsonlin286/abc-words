@@ -4,11 +4,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { listRooms } from "@/lib/api";
 import { getGameSocket } from "@/lib/game-socket";
-import { errorText, linkButton } from "@/components/ui";
+import { buttonSecondary, errorText, linkButton } from "@/components/ui";
 import type { RoomSummary } from "@/shared/contract";
 
 type Props = {
   onSelect: (room: RoomSummary) => void;
+  /** Called from the empty list's "Buat room" button. */
+  onCreate: () => void;
 };
 
 export function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
@@ -59,7 +61,7 @@ export function useLiveRoomData() {
   }, [queryClient]);
 }
 
-export default function RoomList({ onSelect }: Props) {
+export default function RoomList({ onSelect, onCreate }: Props) {
   const rooms = useQuery({ queryKey: ["rooms"], queryFn: listRooms, retry: false });
   useLiveRoomData();
   const count = rooms.data?.length;
@@ -82,7 +84,14 @@ export default function RoomList({ onSelect }: Props) {
 
       {rooms.isPending && !rooms.isError && <p className="text-ink-soft">Memuat daftar room…</p>}
       {rooms.isError && <p className={errorText}>{rooms.error.message}</p>}
-      {count === 0 && <p className="text-ink-soft">Belum ada room yang buka. Buat room dan ajak temanmu.</p>}
+      {count === 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-dashed border-ink-soft px-4 py-3.5">
+          <p className="font-semibold">Belum ada room. Buat yang pertama!</p>
+          <button type="button" onClick={onCreate} className={`${buttonSecondary} px-4 py-2 text-sm`}>
+            Buat room
+          </button>
+        </div>
+      )}
 
       {rooms.data && rooms.data.length > 0 && (
         <ul className="flex max-h-[26rem] flex-col gap-2.5 overflow-y-auto p-1">
