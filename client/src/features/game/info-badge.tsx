@@ -2,9 +2,14 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
+const TIP_WIDTH = 240;
+const EDGE = 8;
+
 /**
  * Small badge next to a player's name that explains itself when tapped
- * (works on touch screens, unlike a `title` tooltip). Escape or a tap elsewhere closes it.
+ * (works on touch screens, unlike a `title` tooltip). Escape, a tap elsewhere or scrolling closes it.
+ * The tip is `position: fixed` under the badge, so a scrolling parent (the score row) can't clip it,
+ * and it is kept inside the screen.
  */
 export default function InfoBadge({
   label,
@@ -19,7 +24,8 @@ export default function InfoBadge({
   explanation: string;
   className?: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const [tip, setTip] = useState<{ top: number; left: number } | null>(null);
+  const open = tip !== null;
   const wrapper = useRef<HTMLSpanElement>(null);
   const tipId = useId();
 
@@ -27,14 +33,20 @@ export default function InfoBadge({
     if (!open) return;
     const close = (e: PointerEvent | KeyboardEvent) => {
       if (e instanceof KeyboardEvent ? e.key === "Escape" : !wrapper.current?.contains(e.target as Node)) {
-        setOpen(false);
+        setTip(null);
       }
     };
+    // The tip is fixed to where the badge was; once anything scrolls it would float off.
+    const hide = () => setTip(null);
     document.addEventListener("pointerdown", close);
     document.addEventListener("keydown", close);
+    window.addEventListener("scroll", hide, true);
+    window.addEventListener("resize", hide);
     return () => {
       document.removeEventListener("pointerdown", close);
       document.removeEventListener("keydown", close);
+      window.removeEventListener("scroll", hide, true);
+      window.removeEventListener("resize", hide);
     };
   }, [open]);
 
@@ -45,16 +57,24 @@ export default function InfoBadge({
         aria-expanded={open}
         aria-describedby={open ? tipId : undefined}
         aria-label={label}
-        onClick={() => setOpen((v) => !v)}
+        onClick={(e) => {
+          if (open) return setTip(null);
+          const r = e.currentTarget.getBoundingClientRect();
+          const width = Math.min(TIP_WIDTH, window.innerWidth - 2 * EDGE);
+          const center = r.left + r.width / 2;
+          const left = Math.min(Math.max(center - width / 2, EDGE), window.innerWidth - EDGE - width);
+          setTip({ top: r.bottom + 8, left });
+        }}
         className={`inline-flex items-center gap-1 rounded px-0.5 text-xs leading-none font-medium tabular-nums focus-visible:outline-3 focus-visible:outline-redpen ${className}`}
       >
         {children}
       </button>
-      {open && (
+      {tip && (
         <span
           id={tipId}
           role="tooltip"
-          className="absolute top-full left-1/2 z-10 mt-2 w-60 -translate-x-1/2 rounded-xl border-2 border-ink bg-white px-3 py-2 text-xs leading-snug font-medium text-ink shadow-[3px_3px_0_var(--color-ink)]"
+          style={{ top: tip.top, left: tip.left, width: Math.min(TIP_WIDTH, window.innerWidth - 2 * EDGE) }}
+          className="fixed z-30 rounded-xl border-2 border-ink bg-white px-3 py-2 text-xs leading-snug font-medium text-ink shadow-[3px_3px_0_var(--color-ink)]"
         >
           {explanation}
         </span>

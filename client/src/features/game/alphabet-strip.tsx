@@ -11,7 +11,19 @@ export default function AlphabetStrip({ used }: { used: string[] }) {
         {LETTERS.map((letter) => (
           <li key={letter}>
             {used.includes(letter) ? (
-              <s className="text-ink-faint decoration-redpen decoration-[3px]">{letter}</s>
+              <span className="relative inline-block text-ink-faint">
+                {letter}
+                <span className="sr-only"> (sudah keluar)</span>
+                {/* A diagonal red-pen stroke, bottom-left to top-right, a little past the letter. */}
+                <svg
+                  aria-hidden
+                  viewBox="0 0 10 10"
+                  preserveAspectRatio="none"
+                  className="pointer-events-none absolute -inset-x-1 inset-y-0.5 h-[calc(100%-0.25rem)] w-[calc(100%+0.5rem)] overflow-visible"
+                >
+                  <path d="M1 9.2 Q5 5.4 9 0.8" fill="none" stroke="var(--color-redpen)" strokeWidth="3" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                </svg>
+              </span>
             ) : (
               letter
             )}

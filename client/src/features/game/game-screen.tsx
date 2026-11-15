@@ -50,6 +50,7 @@ export default function GameScreen() {
     <div className="flex w-full flex-col gap-6">
       <RoomBar room={room} />
       <AlphabetStrip used={crossedOut} />
+      {playing && <ScoreStrip room={room} />}
 
       <section aria-label="Permainan" className="note-card flex flex-col gap-6 p-4 sm:p-6">
         {playing && isAfk(room.state, myId) && <AfkNotice />}
@@ -62,12 +63,7 @@ export default function GameScreen() {
         {phase === "finished" && <FinishedPhase room={room} isHost={room.hostId === myId} />}
       </section>
 
-      {playing && (
-        <div className="flex flex-col gap-2">
-          <ScoreStrip room={room} />
-          {room.hostId === myId && <EndGameButton />}
-        </div>
-      )}
+      {playing && room.hostId === myId && <EndGameButton />}
 
       <ChatPanel />
     </div>
