@@ -3,6 +3,7 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { useRef } from "react";
+import { START_ID } from "./hero-cta";
 
 gsap.registerPlugin(useGSAP);
 
@@ -23,7 +24,7 @@ export default function HeroMotion({ className, children }: { className?: string
       const mm = gsap.matchMedia();
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        gsap
+        const tl = gsap
           .timeline({ defaults: { ease: "power3.out" } })
           .from(q("logo"), { autoAlpha: 0, yPercent: 60, rotate: -4, duration: 0.6, ease: "back.out(1.8)" }, 0.22)
           .from(q("headline"), { autoAlpha: 0, yPercent: 105, duration: 0.7, stagger: 0.4 }, 0.05)
@@ -42,6 +43,9 @@ export default function HeroMotion({ className, children }: { className?: string
           )
           .from(q("cta"), { autoAlpha: 0, y: 16, duration: 0.5, ease: "back.out(2)" }, 1.05)
           .from(q("actions"), { autoAlpha: 0, y: 18, duration: 0.5 }, 1.2);
+        // Came from "Main sekarang" on another page (`/#mulai`): the page opens at the name field,
+        // so skip the intro; the field also has to be visible to take focus.
+        if (window.location.hash === `#${START_ID}`) tl.progress(1);
       });
 
       // Reduced motion: no tweens; show everything in its final state.

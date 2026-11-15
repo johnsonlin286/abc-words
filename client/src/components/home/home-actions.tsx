@@ -7,6 +7,7 @@ import { Connected } from "@/components/session-gate";
 import SignInForm from "@/components/sign-in-form";
 import type { RoomSummary } from "@/shared/contract";
 import { useAuthStore } from "@/stores/auth-store";
+import { START_ID } from "./hero-cta";
 
 /**
  * The playing part of the home page. Signed out: a name field, plus the open rooms so visitors
@@ -29,6 +30,15 @@ export default function HomeActions() {
     nameRef.current?.focus();
     nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
+
+  // Arriving from "Main sekarang" on another page (`/#mulai`) without a name yet: go straight to
+  // the name field, then drop the hash so a reload or Back doesn't jump there again.
+  useEffect(() => {
+    if (!hydrated || signedIn || window.location.hash !== `#${START_ID}`) return;
+    nameRef.current?.focus({ preventScroll: true });
+    nameRef.current?.scrollIntoView({ block: "center" });
+    window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+  }, [hydrated, signedIn]);
 
   // Keeps the layout from jumping while the session is read.
   if (!hydrated) return <div aria-hidden className="h-72" />;

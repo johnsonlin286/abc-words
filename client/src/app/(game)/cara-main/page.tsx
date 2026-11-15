@@ -2,6 +2,7 @@ import { Play } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import BackButton from "@/components/back-button";
 import { buttonPrimary } from "@/components/ui";
 import HowToPlay from "@/features/game/how-to-play";
 import logo from "../../../../public/logo.png";
@@ -13,9 +14,12 @@ export default function HowToPlayPage() {
   return (
     <article className="flex w-full flex-col gap-10">
       <header className="flex flex-col gap-6">
-        <Link href="/" aria-label="ABC Lima Dasar, ke beranda" className="w-fit rounded-md focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-redpen">
-          <Image src={logo} alt="" sizes="180px" className="h-9 w-auto sm:h-10" />
-        </Link>
+        <div className="flex items-center justify-between gap-4">
+          <BackButton />
+          <Link href="/" aria-label="ABC Lima Dasar, ke beranda" className="w-fit rounded-md focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-redpen">
+            <Image src={logo} alt="" sizes="180px" className="h-9 w-auto sm:h-10" />
+          </Link>
+        </div>
         <div className="flex flex-col gap-3">
           <h1 className="text-5xl leading-tight font-bold sm:text-6xl">
             <span className="relative isolate inline-block">
