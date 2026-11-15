@@ -37,7 +37,7 @@ const STEPS = [
   {
     title: "Siapkan room",
     body: [
-      `Butuh ${MIN_PLAYERS}–${LIMITS.maxMembers} pemain. Host memilih kategori, bahasa jawaban, dan jumlah ronde (maksimal ${MAX_ROUNDS}).`,
+      `Butuh ${MIN_PLAYERS}–${LIMITS.maxMembers} pemain. Host memilih kategori dan jumlah ronde (maksimal ${MAX_ROUNDS}).`,
     ],
   },
   {
@@ -53,6 +53,7 @@ const STEPS = [
     body: [
       "Semua angka dijumlahkan lalu dihitung dari A: 1 = A, 26 = Z, 27 kembali ke A.",
       "Huruf yang sudah pernah keluar dilompati ke huruf berikutnya.",
+      'Hurufnya sulit? Tekan "Ganti huruf" saat huruf baru keluar. Kalau lebih dari separuh pemain setuju, huruf itu dicoret dan diganti huruf acak yang belum pernah keluar (bisa lebih mudah, bisa juga lebih sulit). Paling banyak sekali per ronde.',
     ],
   },
   {

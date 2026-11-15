@@ -57,7 +57,6 @@ export const CATEGORIES = [
   { id: "hewan", label: "Hewan" },
   { id: "lagu", label: "Judul lagu" },
   { id: "film", label: "Judul film" },
-  { id: "kota-indonesia", label: "Kota di Indonesia" },
   { id: "negara", label: "Negara" },
   { id: "custom", label: "Lainnya" },
 ] as const;
@@ -74,16 +73,10 @@ export function rejectReasonLabel(reason: RejectReason): string {
   return REJECT_REASONS.find((r) => r.id === reason)?.label ?? reason;
 }
 
-export const LANGUAGES = [
-  { id: "id", label: "Indonesia" },
-  { id: "en", label: "English" },
-] as const;
-
 /** Mirrors `AbcWordsSettings` in backend/src/modules/abc-words. */
 export type GameSettings = {
   category: (typeof CATEGORIES)[number]["id"];
   customCategory: string;
-  language: (typeof LANGUAGES)[number]["id"];
   maxRounds: number;
 };
 
@@ -131,6 +124,8 @@ export type GameState = ChatState & {
   votingDone: string[];
   /** Point deductions this round other than the player's own answer; filled when the result is shown. */
   penalties: Penalty[];
+  /** Players who want this round's letter changed (reveal phase). */
+  letterVotes: string[];
   /** Lone rejections per player in this game (public). */
   loneRejections: Record<string, number>;
   /** Rounds in a row each player neither picked nor answered; see `AFK_ROUNDS`. */
@@ -156,6 +151,8 @@ export type RevealInfo = {
   total: number;
   letter: string;
   skippedFrom: string | null;
+  /** Letter replaced by the players' "ganti huruf" vote this round; null when not changed. */
+  changedFrom: string | null;
 };
 
 /** Players still in the room, best score first. Equal scores share a rank. */

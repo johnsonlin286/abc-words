@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   CATEGORIES,
   CUSTOM_CATEGORY_MAX,
-  LANGUAGES,
   MAX_ROUNDS,
   type GameSettings,
 } from "@/shared/game";
@@ -90,24 +89,6 @@ export default function GameSettingsForm({ settings, isHost }: { settings: GameS
         </fieldset>
 
         <div className="flex flex-wrap gap-x-8 gap-y-4">
-          <fieldset disabled={!isHost} className="group">
-            <legend className="mb-1.5 text-sm text-chalk-dim">Bahasa jawaban</legend>
-            <div className="flex gap-2">
-              {LANGUAGES.map((l) => (
-                <label key={l.id} className={optionClass(settings.language === l.id)}>
-                  <input
-                    type="radio"
-                    name="language"
-                    className="sr-only"
-                    checked={settings.language === l.id}
-                    onChange={() => save({ language: l.id })}
-                  />
-                  {l.label}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
           <fieldset disabled={!isHost}>
             <legend className="mb-1.5 text-sm text-chalk-dim">Jumlah ronde</legend>
             <div className="flex items-center gap-3">
