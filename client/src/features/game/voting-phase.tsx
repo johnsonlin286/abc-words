@@ -29,8 +29,7 @@ export default function VotingPhase({ room, letter }: { room: GameRoomView; lett
   /** Answer whose reason picker is open before the rejection is sent. */
   const [choosingFor, setChoosingFor] = useState<string | null>(null);
 
-  const { answers, rejectionsLeft, rejectionLimit, votingDone, phaseMs } = room.state;
-  const twoPlayers = rejectionLimit === 1;
+  const { answers, rejectionsLeft, votingDone, phaseMs } = room.state;
   // Same rule as the server: online, not AFK, with someone else's answer to judge.
   const judges = room.members.filter(
     (m) => m.isConnected && !isAfk(room.state, m.userId) && answers.some((a) => a.userId !== m.userId),
@@ -54,12 +53,11 @@ export default function VotingPhase({ room, letter }: { room: GameRoomView; lett
         <h3 className="text-lg font-bold">Ada jawaban yang tidak sesuai? Coret!</h3>
         <p className="mt-1 text-sm leading-relaxed font-medium text-ink-soft">
           Jawaban yang gugur {formatPoints(POINTS.rejected)} poin.{" "}
-          {twoPlayers
-            ? "Main berdua: jatah tolak hanya 1 per permainan dan tidak dikembalikan."
-            : `Tolakan yang disetujui pemain lain dikembalikan ke jatahmu. Menolak sendirian jawaban yang tetap lolos, mulai kali ke-${LONE_REJECTION_WARNINGS + 1}: ${formatPoints(POINTS.loneRejection)} poin.`}{" "}
+          Tolakan yang disetujui pemain lain dikembalikan ke jatahmu. Menolak sendirian jawaban yang tetap lolos, mulai
+          kali ke-{LONE_REJECTION_WARNINGS + 1}: {formatPoints(POINTS.loneRejection)} poin.{" "}
           Sisa jatah tolakmu: <span className="rounded-sm bg-highlight px-1 font-bold text-ink tabular-nums">{rejectionsLeft}</span>.
         </p>
-        {!twoPlayers && myLoneRejections >= LONE_REJECTION_WARNINGS && (
+        {myLoneRejections >= LONE_REJECTION_WARNINGS && (
           <p className="mt-2 flex items-start gap-1.5 text-sm font-semibold text-redpen">
             <WarningIcon className="mt-0.5 shrink-0" />
             {warningText(myLoneRejections, null)}

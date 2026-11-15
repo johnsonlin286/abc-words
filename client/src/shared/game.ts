@@ -19,7 +19,8 @@ export function isRoomCode(code: string): boolean {
 /** Room type = backend module that handles the room (backend/src/modules/abc-words). */
 export const ROOM_TYPE = "abc-words";
 
-export const MIN_PLAYERS = 2;
+/** Same as backend: with 2 players the only judge could fail the other answer on purpose. */
+export const MIN_PLAYERS = 3;
 export const MAX_ROUNDS = 10;
 export const CUSTOM_CATEGORY_MAX = 40;
 export const ANSWER_MIN = 2;
@@ -33,8 +34,10 @@ export const AFK_ROUNDS = 2;
 /** Lone rejections per game that only get a warning (yellow card); after that each costs points. */
 export const LONE_REJECTION_WARNINGS = 2;
 
-/** Rejection quota per game; 2-player games get 1. */
-export const REJECTIONS = { normal: 3, twoPlayers: 1 } as const;
+/** Rejection quota per game. */
+export const REJECTIONS = 3;
+/** An answer only fails when at least this many players reject it (and more than half of the judges). */
+export const MIN_REJECTIONS_TO_FAIL = 2;
 /** Phase lengths for the rules page; same as `DEFAULT_TIMING` in backend/src/modules/abc-words. */
 export const PICK_MS = 10_000;
 export const ANSWER_MS = 30_000;

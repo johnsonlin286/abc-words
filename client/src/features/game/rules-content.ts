@@ -14,6 +14,7 @@ import {
   LONE_REJECTION_WARNINGS,
   MAX_ROUNDS,
   MIN_PLAYERS,
+  MIN_REJECTIONS_TO_FAIL,
   PICK_MS,
   POINTS,
   REJECT_REASONS,
@@ -29,7 +30,7 @@ export const SCORE_ROWS = [
   { label: "Jawaban gugur", points: POINTS.rejected },
   { label: "Tidak menjawab", points: POINTS.noAnswer },
   {
-    label: `Menolak sendirian jawaban yang tetap lolos, mulai kali ke-${LONE_REJECTION_WARNINGS + 1} (${MIN_PLAYERS + 1}+ pemain)`,
+    label: `Menolak sendirian jawaban yang tetap lolos, mulai kali ke-${LONE_REJECTION_WARNINGS + 1}`,
     points: POINTS.loneRejection,
   },
 ];
@@ -72,8 +73,8 @@ export const STEPS = [
     title: "Voting",
     body: [
       `Selama ${seconds(VOTING_MS)}, tolak jawaban yang tidak sesuai dengan memilih alasannya: ${REJECT_REASONS.map((r) => r.label.toLowerCase()).join(", ")}. Semua pemain bisa melihat siapa menolak dan alasannya.`,
-      "Jawaban gugur kalau lebih dari separuh pemain lain menolaknya.",
-      `Jatah tolak ${REJECTIONS.normal} per permainan (main berdua: ${REJECTIONS.twoPlayers}). Tolakan yang didukung pemain lain dan menggugurkan jawaban dikembalikan ke jatahmu.`,
+      `Jawaban gugur kalau lebih dari separuh pemain lain menolaknya, minimal ${MIN_REJECTIONS_TO_FAIL} orang. Satu orang tidak bisa menggugurkan jawaban sendirian.`,
+      `Jatah tolak ${REJECTIONS} per permainan. Tolakan yang didukung pemain lain dan menggugurkan jawaban dikembalikan ke jatahmu.`,
       `Menolak sendirian jawaban yang ternyata tetap lolos dihitung per permainan. Kali ke-${LONE_REJECTION_WARNINGS} mendapat tanda peringatan ${LONE_REJECTION_WARNINGS}/${LONE_REJECTION_WARNINGS + 1} di papan skor. Mulai kali ke-${LONE_REJECTION_WARNINGS + 1} dianggap sengaja: ${formatPoints(POINTS.loneRejection)} poin setiap kali.`,
       'Tekan "Selesai menilai" kalau sudah. Begitu semua selesai, hasil langsung keluar.',
     ],
