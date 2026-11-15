@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { buttonGhost } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore } from "@/stores/room-store";
 import { AfkNotice, isAfk } from "./afk";
@@ -22,19 +23,18 @@ function EndGameButton() {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <button
-        type="button"
-        className="rounded-md border border-chalk-dim/50 px-4 py-2 text-sm text-chalk hover:border-chalk focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chalk-yellow"
-        onClick={async () => setError(await endGame())}
-      >
+      <button type="button" className={`${buttonGhost} -ml-4 text-sm text-ink-soft`} onClick={async () => setError(await endGame())}>
         Akhiri permainan
       </button>
-      {error && <p className="text-sm text-chalk-yellow">{error}</p>}
+      {error && <p className="text-sm font-semibold text-redpen">{error}</p>}
     </div>
   );
 }
 
-/** The room page: the chalkboard shows the current game phase, the chat stays below it. */
+/**
+ * The room page, written on the notebook: room code and letters on the paper, the current
+ * phase on one index card, the chat on another.
+ */
 export default function GameScreen() {
   const room = useRoomStore((s) => s.room);
   const myId = useAuthStore((s) => s.user?.userId);
@@ -44,13 +44,15 @@ export default function GameScreen() {
   const { phase, reveal, usedLetters, round } = room.state;
   // The new letter is crossed out only after its reveal, so the strip can't spoil it.
   const crossedOut = phase === "reveal" && reveal ? usedLetters.filter((letter) => letter !== reveal.letter) : usedLetters;
+  const playing = phase !== "waiting" && phase !== "finished";
 
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-zinc-200 shadow-sm dark:border-zinc-800">
-      <section className="space-y-6 bg-board p-5 sm:p-7">
-        <RoomBar room={room} />
-        <AlphabetStrip used={crossedOut} />
-        {phase !== "waiting" && phase !== "finished" && isAfk(room.state, myId) && <AfkNotice />}
+    <div className="flex w-full flex-col gap-6">
+      <RoomBar room={room} />
+      <AlphabetStrip used={crossedOut} />
+
+      <section aria-label="Permainan" className="note-card flex flex-col gap-6 p-4 sm:p-6">
+        {playing && isAfk(room.state, myId) && <AfkNotice />}
         {phase === "waiting" && <WaitingRoom room={room} myId={myId} />}
         {phase === "picking" && <PickingPhase room={room} />}
         {phase === "reveal" && reveal && <RevealPhase key={round} room={room} reveal={reveal} />}
@@ -58,13 +60,15 @@ export default function GameScreen() {
         {phase === "voting" && reveal && <VotingPhase key={round} room={room} letter={reveal.letter} />}
         {phase === "result" && reveal && <ResultPhase room={room} letter={reveal.letter} />}
         {phase === "finished" && <FinishedPhase room={room} isHost={room.hostId === myId} />}
-        {phase !== "waiting" && phase !== "finished" && (
-          <>
-            <ScoreStrip room={room} />
-            {room.hostId === myId && <EndGameButton />}
-          </>
-        )}
       </section>
+
+      {playing && (
+        <div className="flex flex-col gap-2">
+          <ScoreStrip room={room} />
+          {room.hostId === myId && <EndGameButton />}
+        </div>
+      )}
+
       <ChatPanel />
     </div>
   );

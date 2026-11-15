@@ -46,7 +46,7 @@ export default function InfoBadge({
         aria-describedby={open ? tipId : undefined}
         aria-label={label}
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex items-center gap-1 rounded px-0.5 text-xs leading-none font-medium tabular-nums focus-visible:outline-2 focus-visible:outline-chalk-yellow ${className}`}
+        className={`inline-flex items-center gap-1 rounded px-0.5 text-xs leading-none font-medium tabular-nums focus-visible:outline-3 focus-visible:outline-redpen ${className}`}
       >
         {children}
       </button>
@@ -54,7 +54,7 @@ export default function InfoBadge({
         <span
           id={tipId}
           role="tooltip"
-          className="absolute top-full left-1/2 z-10 mt-2 w-60 -translate-x-1/2 rounded-md border border-chalk-yellow/60 bg-board-deep px-3 py-2 text-xs leading-snug font-normal text-chalk shadow-lg"
+          className="absolute top-full left-1/2 z-10 mt-2 w-60 -translate-x-1/2 rounded-xl border-2 border-ink bg-white px-3 py-2 text-xs leading-snug font-medium text-ink shadow-[3px_3px_0_var(--color-ink)]"
         >
           {explanation}
         </span>

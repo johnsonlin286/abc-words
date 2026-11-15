@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Play } from "lucide-react";
+import { buttonPrimary, errorText, hint, notice } from "@/components/ui";
 import { MIN_PLAYERS } from "@/shared/game";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 import GameSettingsForm from "./game-settings-form";
@@ -31,29 +33,30 @@ export default function WaitingRoom({ room, myId }: { room: GameRoomView; myId: 
   return (
     <div className="space-y-6">
       {room.state.endedReason && (
-        <p role="status" className="rounded-md border border-chalk-yellow px-3 py-2 text-sm text-chalk">
+        <p role="status" className={notice}>
           {room.state.endedReason}.
         </p>
       )}
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-8 sm:grid-cols-2 sm:gap-6">
         <PlayerSeats members={room.members} maxMembers={room.maxMembers} hostId={room.hostId} myId={myId} />
         <GameSettingsForm settings={room.settings} isHost={isHost} />
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="flex flex-col gap-2 border-t-2 border-dashed border-ink/20 pt-5 sm:flex-row sm:items-center sm:gap-4">
         {isHost && (
           <button
             type="button"
             disabled={!canStart || starting}
             onClick={handleStart}
-            className="rounded-md bg-chalk-yellow px-5 py-2 font-medium text-board-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chalk disabled:opacity-50"
+            className={`${buttonPrimary} px-6 py-3 text-lg`}
           >
+            <Play aria-hidden className="size-5 fill-current" strokeWidth={2.5} />
             {starting ? "Memulai…" : "Mulai permainan"}
           </button>
         )}
-        {status && <p className="text-sm text-chalk-dim">{status}</p>}
-        {error && <p className="text-sm text-chalk-yellow">{error}</p>}
+        {status && <p className={hint}>{status}</p>}
+        {error && <p className={errorText}>{error}</p>}
       </div>
     </div>
   );

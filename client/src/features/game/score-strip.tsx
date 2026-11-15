@@ -8,11 +8,11 @@ export default function ScoreStrip({ room }: { room: GameRoomView }) {
   return (
     <ul aria-label="Skor sementara" className="flex flex-wrap gap-2 text-sm">
       {rankPlayers(room.members, room.state.scores).map((p) => (
-        <li key={p.userId} className="flex items-center gap-2 rounded-full bg-board-deep px-3 py-1 text-chalk">
+        <li key={p.userId} className="flex items-center gap-2 rounded-full border-2 border-ink bg-white px-3 py-1 font-semibold">
           <span className="max-w-40 truncate">{p.name}</span>
           <WarningBadge count={room.state.loneRejections[p.userId] ?? 0} name={p.name} />
           {isAfk(room.state, p.userId) && <AfkBadge name={p.name} />}
-          <span className="font-medium text-chalk-yellow tabular-nums">{p.score}</span>
+          <span className="rounded-full bg-highlight px-1.5 font-bold tabular-nums">{p.score}</span>
         </li>
       ))}
     </ul>

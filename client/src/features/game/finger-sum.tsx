@@ -1,43 +1,8 @@
 import { MoveRight } from "lucide-react";
-import { Sparks } from "./doodles";
-
-/** Hand-drawn loop the teacher circles the letter with (path length normalised to 1 for the draw-in). */
-function PenCircle() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 120 110"
-      className="pointer-events-none absolute -inset-3 h-[calc(100%+1.5rem)] w-[calc(100%+1.5rem)] overflow-visible"
-    >
-      <path
-        data-anim="circle"
-        pathLength={1}
-        strokeDasharray="1"
-        d="M92 18C74 4 34 6 18 30C3 53 12 88 46 98C80 108 112 88 110 54C108 30 92 14 66 12"
-        fill="none"
-        stroke="var(--color-redpen)"
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-/** Tally strokes for a number of raised fingers, five to a hand. */
-function Fingers({ count }: { count: number }) {
-  return (
-    <span className="flex h-5 items-end gap-[3px]">
-      {Array.from({ length: count }, (_, i) => (
-        <span
-          key={i}
-          data-anim="finger"
-          className={`w-[3px] origin-bottom rounded-full bg-ink-soft ${i === 5 ? "ml-1.5" : ""}`}
-          style={{ height: [12, 17, 20, 17, 11][i % 5] }}
-        />
-      ))}
-    </span>
-  );
-}
+import Image from "next/image";
+import { Sparks } from "@/components/home/doodles";
+import PenCircle from "@/components/pen-circle";
+import { HANDS } from "./hands";
 
 /**
  * One part of the sum, in three rows (fingers / value / caption) so that numbers, "+" and "="
@@ -56,7 +21,7 @@ function Term({
 }) {
   return (
     <span className="flex flex-col items-center gap-1">
-      <span className="flex h-5 items-end">{top}</span>
+      <span className="flex h-12 items-end sm:h-14">{top}</span>
       <span
         data-anim={anim}
         className="flex h-12 items-center text-4xl leading-none font-bold tabular-nums sm:h-14 sm:text-5xl"
@@ -84,7 +49,7 @@ const PLAYERS = [
 
 /**
  * The whole game in one line, written in the notebook: everyone's fingers add up to a number,
- * the number is a letter. The letter gets stamped and circled in red pen (see hero-motion.tsx).
+ * the number is a letter, circled in red pen. Shown with the rules (page and in-room dialog).
  */
 export default function FingerSum() {
   const total = PLAYERS.reduce((sum, p) => sum + p.value, 0);
@@ -100,7 +65,7 @@ export default function FingerSum() {
         {PLAYERS.map((p, i) => (
           <span key={p.name} className="contents">
             {i > 0 && <Sign>+</Sign>}
-            <Term anim="number" top={<Fingers count={p.value} />} bottom={p.name}>
+            <Term anim="number" top={<Image src={HANDS[p.value - 1]} alt="" sizes="60px" className="h-full w-auto" />} bottom={p.name}>
               {p.value}
             </Term>
           </span>
@@ -116,7 +81,7 @@ export default function FingerSum() {
         <span className="flex flex-col items-center">
           <span data-anim="letter" className="relative px-2 text-7xl leading-none font-bold text-redpen sm:text-8xl">
             {letter}
-            <PenCircle />
+            <PenCircle anim="circle" />
             <Sparks className="-top-3 -right-4 size-7 -scale-x-100" color="var(--color-highlight)" />
           </span>
           <span

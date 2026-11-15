@@ -1,55 +1,67 @@
+import { useId } from "react";
+import FingerSum from "./finger-sum";
 import { formatPoints } from "@/shared/game";
-import { chalkFont } from "./fonts";
 import { CHAT_RULES, SCORE_NOTE, SCORE_ROWS, STEPS } from "./rules-content";
 
-/** Game rules on the chalkboard: the in-room rules dialog (the /cara-main page has its own layout). */
-export default function HowToPlay({ headingLevel = 1 }: { headingLevel?: 1 | 2 }) {
-  const Heading = headingLevel === 1 ? "h1" : "h2";
-  const Sub = headingLevel === 1 ? "h2" : "h3";
+function Bullets({ items }: { items: readonly string[] }) {
+  return (
+    <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-5 leading-relaxed text-ink-soft marker:text-ink-faint">
+      {items.map((line) => (
+        <li key={line}>{line}</li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * The rules on the notebook: a worked example, each step of a round, points and chat rules.
+ * Used by the /cara-main page and by the rules dialog inside a room. `headingLevel` is the
+ * level of the headings inside (2 on the page under its h1, 3 in the dialog under its h2).
+ */
+export default function HowToPlay({ headingLevel = 2 }: { headingLevel?: 2 | 3 }) {
+  const H = headingLevel === 2 ? "h2" : "h3";
+  const pointsId = useId();
+  const chatId = useId();
 
   return (
-    <div className="space-y-5 text-chalk">
-      <Heading className={`${chalkFont.className} text-3xl`}>Cara main</Heading>
+    <div className="flex flex-col gap-10">
+      <figure className="note-card flex flex-col gap-4 p-5 sm:p-6">
+        <p className="w-fit -rotate-1 rounded-sm bg-highlight-soft px-2.5 font-hand text-lg">Contoh satu ronde</p>
+        <FingerSum />
+        <p className="text-sm leading-relaxed text-ink-soft">
+          Budi, Sari dan Andi menunjukkan 3, 5 dan 2. Jumlahnya 10, huruf ke-10 adalah J. Sekarang semua adu cepat
+          menulis kata berawalan J, misalnya &ldquo;Jerapah&rdquo; untuk kategori Hewan.
+        </p>
+      </figure>
 
-      <ol className="space-y-4">
+      <ol className="flex flex-col gap-8">
         {STEPS.map((step, i) => (
-          <li key={step.title} className="flex gap-3">
+          <li key={step.title} className="flex gap-4">
             <span
               aria-hidden
-              className={`${chalkFont.className} w-6 shrink-0 text-2xl leading-7 text-chalk-yellow`}
+              className="grid size-11 shrink-0 place-items-center rounded-xl border-2 border-ink bg-highlight text-xl font-bold shadow-[2px_2px_0_var(--color-ink)]"
             >
               {i + 1}
             </span>
-            <div>
-              <Sub className="font-medium">{step.title}</Sub>
-              <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-chalk-dim marker:text-chalk-dim/60">
-                {step.body.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
+            <div className="min-w-0 pt-1.5">
+              <H className="text-2xl leading-tight font-bold">{step.title}</H>
+              <Bullets items={step.body} />
             </div>
           </li>
         ))}
       </ol>
 
-      <section>
-        <Sub className="mb-2 font-medium">Obrolan</Sub>
-        <ul className="list-disc space-y-1 pl-4 text-sm text-chalk-dim marker:text-chalk-dim/60">
-          {CHAT_RULES.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <Sub className="mb-2 font-medium">Poin</Sub>
-        <table className="w-full text-sm">
+      <section aria-labelledby={pointsId} className="note-card p-5 sm:p-6">
+        <H id={pointsId} className="text-2xl font-bold">
+          Poin
+        </H>
+        <table className="mt-3 w-full">
           <tbody>
             {SCORE_ROWS.map((row) => (
-              <tr key={row.label} className="border-b border-chalk-dim/20 last:border-0">
-                <td className="py-1.5 pr-3 text-chalk-dim">{row.label}</td>
+              <tr key={row.label} className="border-b-2 border-paper-line last:border-0">
+                <td className="py-2.5 pr-4 leading-snug text-ink-soft">{row.label}</td>
                 <td
-                  className={`py-1.5 text-right font-medium tabular-nums ${row.points > 0 ? "text-chalk-yellow" : "text-chalk-pink"}`}
+                  className={`py-2.5 text-right text-xl font-bold tabular-nums ${row.points > 0 ? "text-success" : "text-redpen"}`}
                 >
                   {formatPoints(row.points)}
                 </td>
@@ -57,9 +69,14 @@ export default function HowToPlay({ headingLevel = 1 }: { headingLevel?: 1 | 2 }
             ))}
           </tbody>
         </table>
-        <p className="mt-2 text-sm text-chalk-dim">
-          {SCORE_NOTE}
-        </p>
+        <p className="mt-3 font-hand text-lg leading-snug text-redpen">{SCORE_NOTE}</p>
+      </section>
+
+      <section aria-labelledby={chatId}>
+        <H id={chatId} className="text-2xl font-bold">
+          Obrolan
+        </H>
+        <Bullets items={CHAT_RULES} />
       </section>
     </div>
   );

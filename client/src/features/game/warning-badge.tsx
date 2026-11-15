@@ -32,7 +32,7 @@ export default function WarningBadge({ count, name }: { count: number; name: str
     <InfoBadge
       label={`Peringatan ${name}: ${strikeLabel(count)}`}
       explanation={warningText(count, name)}
-      className="text-chalk-yellow"
+      className="font-bold text-ink"
     >
       <WarningIcon />
       {strikeLabel(count)}

@@ -21,21 +21,21 @@ export function useTimeLeft(endsAt: number | null): number | null {
 
 /**
  * Time left in the current phase. `endsAt` comes from the server's remaining time.
- * With `urgent`, the bar turns pink to warn the player.
+ * Drawn as a highlighter stroke in a pen outline; with `urgent` it turns red-pen to warn the player.
  */
 export default function Countdown({ endsAt, totalMs, urgent = false }: { endsAt: number; totalMs: number; urgent?: boolean }) {
   const left = useTimeLeft(endsAt) ?? 0;
 
   return (
     <div role="timer" className="flex items-center gap-3">
-      <div className="h-2 flex-1 overflow-hidden rounded-full bg-board-deep">
+      <div className="h-3.5 flex-1 overflow-hidden rounded-full border-2 border-ink bg-white">
         <div
-          className={`h-full rounded-full transition-[width] duration-100 ease-linear ${urgent ? "bg-chalk-pink" : "bg-chalk-yellow"}`}
+          className={`h-full rounded-full transition-[width] duration-100 ease-linear ${urgent ? "bg-redpen" : "bg-highlight"}`}
           style={{ width: `${Math.min(left / totalMs, 1) * 100}%` }}
         />
       </div>
       <span
-        className={`w-8 text-right text-lg font-medium tabular-nums ${urgent ? "text-chalk-pink" : "text-chalk"}`}
+        className={`w-8 text-right text-xl font-bold tabular-nums ${urgent ? "text-redpen" : "text-ink"}`}
       >
         {Math.ceil(left / 1000)}
       </span>

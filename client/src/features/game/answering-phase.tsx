@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { buttonPrimary, input } from "@/components/ui";
 import { ANSWER_MAX, validateAnswer } from "@/shared/game";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
@@ -47,7 +48,7 @@ function AnswerForm({ letter }: { letter: string }) {
       <div className="flex gap-2">
         <input
           aria-label={`Jawaban berawalan huruf ${letter}`}
-          className="min-w-0 flex-1 rounded-md border border-chalk-dim/50 bg-board-deep px-3 py-2 text-lg text-chalk placeholder:text-chalk-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chalk-yellow"
+          className={`${input} min-w-0 flex-1 text-lg`}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
@@ -65,18 +66,18 @@ function AnswerForm({ letter }: { letter: string }) {
         <button
           type="submit"
           disabled={sending || blocked || !text.trim()}
-          className="rounded-md bg-chalk-yellow px-5 py-2 font-medium text-board-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chalk disabled:opacity-50"
+          className={buttonPrimary}
         >
           {blocked ? `Tunggu ${Math.ceil(blockedMs / 1000)}` : "Kirim"}
         </button>
       </div>
       {blocked && (
-        <p role="status" className="rounded-md border border-chalk-pink/60 px-3 py-2 text-sm text-chalk">
+        <p role="status" className="rounded-xl border-2 border-dashed border-redpen bg-white px-3.5 py-2.5 text-sm font-semibold text-redpen">
           Terlalu banyak jawaban ditolak. Tunggu {Math.ceil(blockedMs / 1000)} detik sebelum mengirim lagi.
         </p>
       )}
       {alert && (
-        <p role="alert" className="rounded-md border border-chalk-yellow px-3 py-2 text-sm text-chalk">
+        <p role="alert" className="text-sm font-semibold text-redpen">
           {alert}
         </p>
       )}
@@ -90,13 +91,13 @@ export default function AnsweringPhase({ room, letter }: { room: GameRoomView; l
   const mine = room.state.answers.find((a) => a.userId === myId);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <RoundHeader room={room} letter={letter} />
       {endsAt !== null && room.state.phaseMs !== null && <Countdown endsAt={endsAt} totalMs={room.state.phaseMs} />}
 
       {mine ? (
-        <p className="text-chalk">
-          Jawabanmu: <span className="font-medium break-words">{mine.text}</span>. Menunggu pemain lain.
+        <p className="rounded-xl border-2 border-ink bg-highlight-soft px-4 py-3 font-medium">
+          Jawabanmu: <span className="text-lg font-bold break-words">{mine.text}</span>. Menunggu pemain lain.
         </p>
       ) : (
         <AnswerForm letter={letter} />

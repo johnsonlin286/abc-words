@@ -7,18 +7,18 @@ import {
   MAX_ROUNDS,
   type GameSettings,
 } from "@/shared/game";
+import { errorText, hint, input } from "@/components/ui";
 import { useRoomStore } from "@/stores/room-store";
-import { chalkFont } from "./fonts";
 
 const optionClass = (selected: boolean) =>
-  `cursor-pointer rounded-full border px-3 py-1 text-sm transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-chalk-yellow ${
+  `cursor-pointer rounded-full border-2 px-3.5 py-1 text-sm font-semibold transition-colors has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-redpen ${
     selected
-      ? "border-chalk-yellow bg-chalk-yellow font-medium text-board-deep"
-      : "border-chalk-dim/50 text-chalk group-enabled:hover:border-chalk"
+      ? "border-ink bg-highlight text-ink"
+      : "border-ink/30 bg-white text-ink-soft group-enabled:hover:border-ink group-enabled:hover:text-ink"
   } group-disabled:cursor-default`;
 
 const stepperClass =
-  "h-8 w-8 rounded-full border border-chalk-dim/50 text-lg leading-none text-chalk hover:border-chalk disabled:opacity-30 disabled:hover:border-chalk-dim/50";
+  "grid size-9 place-items-center rounded-full border-2 border-ink bg-white text-xl leading-none font-bold text-ink hover:bg-highlight-soft focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen disabled:border-ink/25 disabled:text-ink-faint disabled:hover:bg-white";
 
 function CustomCategoryInput({
   value,
@@ -34,7 +34,7 @@ function CustomCategoryInput({
   return (
     <input
       aria-label="Nama kategori"
-      className="mt-2 w-full rounded-md border border-chalk-dim/50 bg-board-deep px-3 py-1.5 text-sm text-chalk placeholder:text-chalk-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chalk-yellow"
+      className={`${input} mt-3 read-only:bg-paper`}
       value={editable ? draft : value}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={() => draft !== value && onCommit(draft)}
@@ -56,14 +56,14 @@ export default function GameSettingsForm({ settings, isHost }: { settings: GameS
 
   return (
     <section aria-labelledby="settings-heading">
-      <h2 id="settings-heading" className={`${chalkFont.className} text-2xl text-chalk`}>
+      <h2 id="settings-heading" className="text-xl font-bold">
         Aturan main
       </h2>
-      {!isHost && <p className="text-xs text-chalk-dim">Host yang mengatur bagian ini.</p>}
+      {!isHost && <p className={hint}>Host yang mengatur bagian ini.</p>}
 
-      <div className="mt-2 space-y-4">
+      <div className="mt-3 space-y-5">
         <fieldset disabled={!isHost} className="group">
-          <legend className="mb-1.5 text-sm text-chalk-dim">Kategori</legend>
+          <legend className="mb-2 text-sm font-semibold">Kategori</legend>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((c) => (
               <label key={c.id} className={optionClass(settings.category === c.id)}>
@@ -90,7 +90,7 @@ export default function GameSettingsForm({ settings, isHost }: { settings: GameS
 
         <div className="flex flex-wrap gap-x-8 gap-y-4">
           <fieldset disabled={!isHost}>
-            <legend className="mb-1.5 text-sm text-chalk-dim">Jumlah ronde</legend>
+            <legend className="mb-2 text-sm font-semibold">Jumlah ronde</legend>
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -101,7 +101,7 @@ export default function GameSettingsForm({ settings, isHost }: { settings: GameS
               >
                 −
               </button>
-              <output className="w-6 text-center text-xl font-medium text-chalk tabular-nums">
+              <output className="w-8 text-center text-2xl font-bold tabular-nums">
                 {settings.maxRounds}
               </output>
               <button
@@ -117,7 +117,7 @@ export default function GameSettingsForm({ settings, isHost }: { settings: GameS
           </fieldset>
         </div>
 
-        {error && <p className="text-sm text-chalk-yellow">{error}</p>}
+        {error && <p className={errorText}>{error}</p>}
       </div>
     </section>
   );

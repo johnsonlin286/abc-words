@@ -25,13 +25,6 @@
   --color-highlight-soft: #fff4b0;
   --color-success: #1f7a4d;
 
-  /* Chalkboard used by the game screen (until it gets its own redesign). */
-  --color-board: #21453a;
-  --color-board-deep: #18352c;
-  --color-chalk: #f1efe6;
-  --color-chalk-dim: #b9c7bd;
-  --color-chalk-yellow: #f6d860;
-  --color-chalk-pink: #f4a7a0;
 
   /* Ruled lines: one line every 2rem. */
   --rule: 2rem;
@@ -86,8 +79,12 @@ body {
   box-shadow: 4px 4px 0 var(--color-ink);
 }
 
-/* Reveal of the round's letter: numbers appear, then the letter is written left to right. */
-@keyframes chalk-appear {
+/*
+ * Game screen moments: lines are written in one after another (`ink-appear`), the round's
+ * letter is stamped (`letter-stamp`) and circled in red pen (`pen-draw`, an SVG path with
+ * pathLength 1). Delays are set inline. Reduced motion shows everything at once.
+ */
+@keyframes ink-appear {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -98,14 +95,49 @@ body {
   }
 }
 
-@keyframes chalk-write {
+@keyframes letter-stamp {
   from {
     opacity: 0;
-    clip-path: inset(0 100% 0 0);
+    transform: scale(2.2) rotate(-14deg);
   }
   to {
     opacity: 1;
-    clip-path: inset(0);
+    transform: none;
+  }
+}
+
+/* Hidden until it starts, or the round line cap leaves a red dot where the loop begins. */
+@keyframes pen-draw {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  1% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.ink-appear {
+  animation: ink-appear 240ms ease-out both;
+}
+
+.letter-stamp {
+  animation: letter-stamp 450ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.pen-draw {
+  animation: pen-draw 600ms ease-in-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-appear,
+  .letter-stamp,
+  .pen-draw {
+    animation: none;
   }
 }
 
@@ -128,20 +160,5 @@ body {
   .hero-motion [data-anim="circle"],
   .hero-motion [data-anim="underline"] {
     stroke-dashoffset: 1;
-  }
-}
-
-.chalk-appear {
-  animation: chalk-appear 240ms ease-out both;
-}
-
-.chalk-write {
-  animation: chalk-write 500ms ease-out both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chalk-appear,
-  .chalk-write {
-    animation: none;
   }
 }

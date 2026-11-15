@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { LIMITS } from "@/shared/game";
 import { useAuthStore } from "@/stores/auth-store";
+import { buttonPrimary, input } from "@/components/ui";
 import { useRoomStore } from "@/stores/room-store";
 import { useTimeLeft } from "./countdown";
 
@@ -14,7 +15,11 @@ function clock(ms: number): string {
 
 type PanelSize = "max" | "small" | "closed";
 
-const SIZE_CLASS: Record<Exclude<PanelSize, "closed">, string> = { max: "h-80", small: "h-48" };
+const toggleClass =
+  "rounded-sm text-sm font-semibold text-ink underline decoration-highlight decoration-2 underline-offset-4 hover:decoration-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen";
+
+/** Heights the panel slides between; "closed" leaves only the header bar. */
+const SIZE_CLASS: Record<PanelSize, string> = { max: "h-80", small: "h-48", closed: "h-[2.875rem]" };
 
 export default function ChatPanel() {
   const me = useAuthStore((s) => s.user);
@@ -46,27 +51,14 @@ export default function ChatPanel() {
     setSending(false);
   };
 
-  if (size === "closed") {
-    return (
-      <div className="bg-white px-4 py-3 dark:bg-zinc-950">
-        <button
-          type="button"
-          className="text-sm font-medium text-blue-600 hover:underline"
-          onClick={() => {
-            setSize("small");
-            setReopened(true);
-          }}
-        >
-          Buka obrolan
-        </button>
-      </div>
-    );
-  }
-
   // One button walks max -> small -> closed. Reopening lands on small, where it then grows back to max.
-  const stepLabel = size === "max" ? "Kecilkan" : reopened ? "Besarkan" : "Tutup";
+  const closed = size === "closed";
+  const stepLabel = closed ? "Buka obrolan" : size === "max" ? "Kecilkan" : reopened ? "Besarkan" : "Tutup";
   const nextStep = () => {
-    if (size === "max") {
+    if (closed) {
+      setSize("small");
+      setReopened(true);
+    } else if (size === "max") {
       setSize("small");
     } else if (reopened) {
       setSize("max");
@@ -77,31 +69,36 @@ export default function ChatPanel() {
   };
 
   return (
-    <section aria-label="Obrolan" className={`flex min-h-0 flex-col bg-white dark:bg-zinc-950 ${SIZE_CLASS[size]}`}>
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
-        <h2 className="text-sm font-medium">Obrolan</h2>
-        <button type="button" className="text-xs text-blue-600 hover:underline" onClick={nextStep}>
+    // The height slides between sizes (instantly with reduced motion). When closed, the body
+    // stays mounted (so the draft and scroll position survive) but is inert and clipped away.
+    <section
+      aria-label="Obrolan"
+      className={`note-card flex min-h-0 flex-col overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none ${SIZE_CLASS[size]}`}
+    >
+      <div className="flex shrink-0 items-center justify-between border-b-2 border-ink px-4 py-2">
+        <h2 className="font-bold">Obrolan</h2>
+        <button type="button" aria-expanded={!closed} className={toggleClass} onClick={nextStep}>
           {stepLabel}
         </button>
       </div>
 
+      <div inert={closed} className="flex min-h-0 flex-1 flex-col">
+
       <ul ref={listRef} className="flex-1 space-y-2 overflow-y-auto p-4">
         {messages.map((m) =>
           m.userId === null ? (
-            <li key={m.id} className="text-center text-xs text-zinc-400">
+            <li key={m.id} className="text-center text-xs font-medium text-ink-faint">
               {m.text}
             </li>
           ) : (
             <li key={m.id} className={`flex flex-col ${m.userId === me.userId ? "items-end" : "items-start"}`}>
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs font-medium text-ink-soft">
                 {m.userId === me.userId ? "Kamu" : m.name} ·{" "}
                 {new Date(m.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </span>
               <span
-                className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-sm break-words ${
-                  m.userId === me.userId
-                    ? "bg-blue-600 text-white"
-                    : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                className={`max-w-[80%] rounded-2xl border-2 border-ink px-3 py-1.5 text-sm font-medium break-words ${
+                  m.userId === me.userId ? "rounded-br-sm bg-highlight-soft" : "rounded-bl-sm bg-white"
                 }`}
               >
                 {m.text}
@@ -112,19 +109,19 @@ export default function ChatPanel() {
       </ul>
 
       {connection === "reconnecting" && (
-        <p className="px-4 text-xs text-amber-600">Koneksi terputus, menghubungkan ulang…</p>
+        <p className="px-4 text-xs font-semibold text-ink-soft">Koneksi terputus, menghubungkan ulang…</p>
       )}
-      {error && <p className="px-4 text-xs text-red-600">{error}</p>}
+      {error && <p className="px-4 text-xs font-semibold text-redpen">{error}</p>}
       {muted && (
-        <p role="status" className="px-4 text-xs text-amber-600">
+        <p role="status" className="px-4 text-xs font-semibold text-redpen">
           Kamu dibisukan karena melanggar aturan chat. Bisa mengirim pesan lagi dalam {clock(mutedMs)}.
         </p>
       )}
 
-      <form onSubmit={handleSend} className="flex gap-2 border-t border-zinc-200 p-3 dark:border-zinc-800">
+      <form onSubmit={handleSend} className="flex gap-2 border-t-2 border-ink/15 p-3">
         <input
           aria-label="Tulis pesan"
-          className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+          className={`${input} min-w-0 flex-1 py-2 text-sm disabled:bg-paper`}
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={LIMITS.message}
@@ -134,11 +131,12 @@ export default function ChatPanel() {
         <button
           type="submit"
           disabled={!text.trim() || sending || muted}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className={`${buttonPrimary} px-4 py-2 text-sm`}
         >
           Kirim
         </button>
       </form>
+      </div>
     </section>
   );
 }
