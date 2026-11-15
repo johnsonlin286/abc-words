@@ -1,30 +1,16 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { categoryLabel } from "@/shared/game";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 import Countdown, { useTimeLeft } from "./countdown";
 import { chalkFont } from "./fonts";
+import { HANDS } from "./hands";
 
 const NUMBERS = Array.from({ length: 10 }, (_, i) => i + 1);
-const FINGER_HEIGHTS = [9, 13, 15, 13, 8];
 /** Warn a player who hasn't picked once this little time is left. */
 const HURRY_MS = 3_000;
-
-/** Up to two small chalk hands, one stroke per raised finger. */
-function Fingers({ count }: { count: number }) {
-  return (
-    <span aria-hidden className="flex h-4 items-end justify-center gap-0.5">
-      {Array.from({ length: count }, (_, i) => (
-        <span
-          key={i}
-          className={`w-0.5 rounded-full bg-current ${i === 5 ? "ml-1" : ""}`}
-          style={{ height: FINGER_HEIGHTS[i % 5] }}
-        />
-      ))}
-    </span>
-  );
-}
 
 export default function PickingPhase({ room }: { room: GameRoomView }) {
   const pickNumber = useRoomStore((s) => s.pickNumber);
@@ -54,7 +40,7 @@ export default function PickingPhase({ room }: { room: GameRoomView }) {
 
       <div>
         <p className="mb-2 text-sm text-chalk">Tunjukkan angkamu</p>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-5 gap-2 sm:gap-3">
           {NUMBERS.map((n) => (
             <button
               key={n}
@@ -62,14 +48,24 @@ export default function PickingPhase({ room }: { room: GameRoomView }) {
               aria-label={`Pilih angka ${n}`}
               aria-pressed={myPick === n}
               onClick={() => handlePick(n)}
-              className={`flex flex-col items-center gap-1 rounded-md border py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chalk-yellow ${
-                myPick === n
-                  ? "border-chalk-yellow bg-chalk-yellow text-board-deep"
-                  : "border-chalk-dim/50 bg-board-deep text-chalk hover:border-chalk"
+              className={`flex flex-col items-center gap-1.5 rounded-xl border-2 border-ink px-1 pt-2.5 pb-2 text-ink shadow-[3px_3px_0_var(--color-ink)] transition-[transform,box-shadow,background-color] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_var(--color-ink)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-chalk-yellow ${
+                myPick === n ? "bg-highlight" : "bg-white hover:bg-highlight-soft"
               }`}
             >
-              <span className="text-xl font-medium tabular-nums">{n}</span>
-              <Fingers count={n} />
+              {/*
+                One scale for every hand: each picture is as tall as the widest one (10, two open
+                hands) can be in this button, so 1–5 are drawn exactly as big as the hands in 6–10.
+                69cqw = button width × 160/232 (height/width of the 10 picture).
+              */}
+              <span className="@container flex w-full justify-center">
+                <Image
+                  src={HANDS[n - 1]}
+                  alt=""
+                  sizes="80px"
+                  className="h-[min(5rem,69cqw)] w-auto"
+                />
+              </span>
+              <span className="text-2xl leading-none font-bold tabular-nums sm:text-3xl">{n}</span>
             </button>
           ))}
         </div>
