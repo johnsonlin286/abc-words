@@ -1,4 +1,4 @@
-// Client-side rules for ABC Words on top of the NESIO contract (./contract.ts).
+// Client-side rules for ABC Lima Dasar on top of the NESIO contract (./contract.ts).
 // ./contract.ts is copied verbatim from backend/src/shared/contract.ts — keep it in sync.
 
 export const LIMITS = {

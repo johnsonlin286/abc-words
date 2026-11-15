@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import HowToPlay from "@/features/game/how-to-play";
 
-export const metadata: Metadata = { title: "Cara main · ABC Words" };
+export const metadata: Metadata = { title: "Cara main · ABC Lima Dasar" };
 
 export default function HowToPlayPage() {
   return (

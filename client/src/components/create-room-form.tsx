@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { buttonPrimary, errorText, input, label } from "@/components/ui";
 import { LIMITS } from "@/shared/game";
 import { useRoomStore } from "@/stores/room-store";
+
+const VISIBILITY = [
+  { value: false, label: "Publik", hint: "Muncul di daftar, siapa saja bisa gabung" },
+  { value: true, label: "Privat", hint: "Hanya yang tahu kata sandinya" },
+];
 
 export default function CreateRoomForm() {
   const createRoom = useRoomStore((s) => s.createRoom);
@@ -16,7 +22,7 @@ export default function CreateRoomForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isPrivate && password.length < LIMITS.passwordMin) {
-      return setLocalError(`Kata sandi wajib untuk room privat (min. ${LIMITS.passwordMin} karakter).`);
+      return setLocalError(`Room privat butuh kata sandi minimal ${LIMITS.passwordMin} karakter.`);
     }
     setLocalError(null);
     await createRoom({ isPrivate, password: isPrivate ? password : undefined });
@@ -25,61 +31,56 @@ export default function CreateRoomForm() {
   const error = localError ?? serverError;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Jenis room</legend>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { value: false, label: "Publik", hint: "Siapa saja bisa join" },
-            { value: true, label: "Privat", hint: "Pakai kata sandi" },
-          ].map((opt) => (
-            <label
-              key={opt.label}
-              className={`cursor-pointer rounded-md border px-3 py-2 text-sm transition-colors ${
-                isPrivate === opt.value
-                  ? "border-blue-600 bg-blue-50 dark:bg-blue-950/40"
-                  : "border-zinc-300 dark:border-zinc-700"
-              }`}
-            >
-              <input
-                type="radio"
-                name="visibility"
-                className="sr-only"
-                checked={isPrivate === opt.value}
-                onChange={() => setIsPrivate(opt.value)}
-              />
-              <span className="block font-medium">{opt.label}</span>
-              <span className="block text-xs text-zinc-500">{opt.hint}</span>
-            </label>
-          ))}
+        <legend className={`${label} mb-2`}>Siapa yang boleh gabung?</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {VISIBILITY.map((opt) => {
+            const selected = isPrivate === opt.value;
+            return (
+              <label
+                key={opt.label}
+                className={`flex cursor-pointer flex-col rounded-xl border-2 px-3.5 py-2.5 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-redpen ${
+                  selected ? "border-ink bg-highlight-soft" : "border-ink/30 bg-white hover:border-ink"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="visibility"
+                  className="sr-only"
+                  checked={selected}
+                  onChange={() => setIsPrivate(opt.value)}
+                />
+                <span className="font-bold">{opt.label}</span>
+                <span className="text-sm text-ink-soft">{opt.hint}</span>
+              </label>
+            );
+          })}
         </div>
       </fieldset>
 
       {isPrivate && (
-        <label className="block space-y-1">
-          <span className="text-sm font-medium">
-            Kata sandi <span className="text-red-500">*</span>
-          </span>
+        <div className="space-y-1.5">
+          <label htmlFor="create-password" className={label}>
+            Kata sandi room
+          </label>
           <input
+            id="create-password"
             type="password"
-            className="w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+            className={input}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             minLength={LIMITS.passwordMin}
             maxLength={LIMITS.passwordMax}
-            placeholder={`min. ${LIMITS.passwordMin} karakter`}
+            placeholder={`Minimal ${LIMITS.passwordMin} karakter`}
             required
           />
-        </label>
+        </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className={errorText}>{error}</p>}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      <button type="submit" disabled={pending} className={buttonPrimary}>
         {pending ? "Membuat room…" : "Buat room"}
       </button>
     </form>

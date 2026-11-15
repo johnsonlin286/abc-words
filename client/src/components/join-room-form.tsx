@@ -3,12 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { getRoomSummary } from "@/lib/api";
+import { buttonPrimary, errorText, input, label, linkButton } from "@/components/ui";
 import { LIMITS } from "@/shared/game";
 import { useRoomStore } from "@/stores/room-store";
 import { getRoomStatus, RoomStatusLabel, VisibilityBadge } from "./room-list";
-
-const inputClass =
-  "w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700";
 
 type Props = {
   code: string;
@@ -77,40 +75,41 @@ export default function JoinRoomForm({
   const error = localError ?? serverError;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {!codeLocked && (
-        <label className="block space-y-1">
-          <span className="text-sm font-medium">
-            Kode room <span className="text-red-500">*</span>
-          </span>
+        <div className="space-y-1.5">
+          <label htmlFor="join-code" className={label}>
+            Kode room
+          </label>
           <input
+            id="join-code"
             autoFocus
-            className={`${inputClass} font-mono text-lg tracking-[0.3em] uppercase`}
+            className={`${input} text-xl font-bold tracking-[0.3em] uppercase tabular-nums`}
             value={code}
             onChange={(e) => handleCodeChange(e.target.value)}
             maxLength={LIMITS.roomCode}
             placeholder="ABC123"
             autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
             required
           />
-        </label>
+        </div>
       )}
 
       {/* Room preview */}
       {codeComplete && (
-        <div className="rounded-md border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800">
-          {preview.isFetching && !room && <p className="text-zinc-500">Mencari room…</p>}
-          {preview.isError && <p className="text-red-600">{preview.error.message}</p>}
+        <div className="rounded-xl border-2 border-dashed border-ink/40 bg-paper px-3.5 py-2.5">
+          {preview.isFetching && !room && <p className="text-ink-soft">Mencari room…</p>}
+          {preview.isError && <p className={errorText}>{preview.error.message}</p>}
           {room && (
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                {codeLocked && (
-                  <p className="font-mono font-semibold tracking-widest">{room.id}</p>
-                )}
+                {codeLocked && <p className="text-xl font-bold tracking-[0.2em] tabular-nums">{room.id}</p>}
                 <p className="truncate">
-                  Host: <span className="font-medium">{room.hostName ?? "—"}</span>
+                  Host: <span className="font-bold">{room.hostName ?? "—"}</span>
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-sm text-ink-soft">
                   {room.memberCount}/{room.maxMembers} pemain
                 </p>
               </div>
@@ -121,11 +120,7 @@ export default function JoinRoomForm({
             </div>
           )}
           {codeLocked && onUnlockCode && (
-            <button
-              type="button"
-              onClick={onUnlockCode}
-              className="mt-1 text-xs text-blue-600 hover:underline"
-            >
+            <button type="button" onClick={onUnlockCode} className={`${linkButton} mt-2 text-sm`}>
               Pakai kode lain
             </button>
           )}
@@ -133,29 +128,26 @@ export default function JoinRoomForm({
       )}
 
       {needsPassword && joinable && (
-        <label className="block space-y-1">
-          <span className="text-sm font-medium">
-            Kata sandi <span className="text-red-500">*</span>
-          </span>
+        <div className="space-y-1.5">
+          <label htmlFor="join-password" className={label}>
+            Kata sandi room
+          </label>
           <input
+            id="join-password"
             ref={passwordRef}
             type="password"
-            className={inputClass}
+            className={input}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             maxLength={LIMITS.passwordMax}
             required
           />
-        </label>
+        </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className={errorText}>{error}</p>}
 
-      <button
-        type="submit"
-        disabled={pending || !joinable}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      <button type="submit" disabled={pending || !joinable} className={buttonPrimary}>
         {pending ? "Bergabung…" : "Gabung room"}
       </button>
     </form>

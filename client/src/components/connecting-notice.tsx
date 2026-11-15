@@ -1,3 +1,7 @@
 export default function ConnectingNotice() {
-  return <p className="text-sm text-zinc-500">Menghubungkan ke server…</p>;
+  return (
+    <p role="status" className="text-ink-soft">
+      Menghubungkan ke server…
+    </p>
+  );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { linkButton, notice as noticeClass } from "@/components/ui";
 import { copyText } from "@/lib/clipboard";
 import type { RoomSummary } from "@/shared/contract";
 import { useAuthStore } from "@/stores/auth-store";
@@ -17,25 +17,40 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "join", label: "Gabung room" },
 ];
 
-export default function Lobby() {
+/** Signed in, not in a room: create one, join by code, or pick an open room. */
+export default function Lobby({
+  initialRoom = null,
+  onInitialRoomUsed,
+}: {
+  /** A room picked before signing in; opened once. */
+  initialRoom?: RoomSummary | null;
+  /** Called once `initialRoom` has been taken, so leaving the room later doesn't rejoin it. */
+  onInitialRoomUsed?: () => void;
+}) {
   const clearError = useRoomStore((s) => s.clearError);
+  const joinRoom = useRoomStore((s) => s.joinRoom);
   const signOut = useRoomStore((s) => s.signOut);
   const connection = useRoomStore((s) => s.connection);
   const roomNotice = useRoomStore((s) => s.notice);
   const user = useAuthStore((s) => s.user);
 
-  const [tab, setTab] = useState<Tab>("create");
-  const [code, setCode] = useState("");
+  // A private room picked before signing in opens straight on its join form.
+  const startPrivate = initialRoom?.hasPassword ? initialRoom : null;
+  const [tab, setTab] = useState<Tab>(startPrivate ? "join" : "create");
+  const [code, setCode] = useState(startPrivate?.id ?? "");
   const [codeLocked, setCodeLocked] = useState(false);
-  const [selectionId, setSelectionId] = useState(0);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [selectionId, setSelectionId] = useState(startPrivate ? 1 : 0);
+  const [notice, setNotice] = useState<string | null>(
+    startPrivate ? `Kode ${startPrivate.id} sudah diisi. Masukkan kata sandinya.` : null,
+  );
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const switchTab = (next: Tab) => {
     setTab(next);
     clearError();
   };
 
-  const handleSelectRoom = async (room: RoomSummary) => {
+  const selectRoom = async (room: RoomSummary) => {
     switchTab("join");
     setCode(room.id);
     setSelectionId((n) => n + 1);
@@ -44,56 +59,55 @@ export default function Lobby() {
       // Private: copy the code and show it in the (editable) code field.
       setCodeLocked(false);
       const copied = await copyText(room.id);
-      setNotice(
-        `Kode ${room.id} ${copied ? "disalin & " : ""}sudah diisi. Masukkan kata sandi untuk bergabung.`,
-      );
+      setNotice(`Kode ${room.id} ${copied ? "disalin dan " : ""}sudah diisi. Masukkan kata sandinya.`);
     } else {
       // Public: only the name is needed.
       setCodeLocked(true);
       setNotice(null);
     }
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // A public room picked before signing in is joined right away (the page then moves to the room).
+  const openedInitial = useRef(false);
+  useEffect(() => {
+    if (!initialRoom || openedInitial.current) return;
+    openedInitial.current = true;
+    onInitialRoomUsed?.();
+    if (initialRoom.hasPassword) return; // already open on its join form (initial state above)
+    void joinRoom({ roomId: initialRoom.id }).then((joined) => {
+      if (!joined) void selectRoom(initialRoom); // e.g. the room just filled up: show why
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only once, for the room picked before sign-in
+  }, [initialRoom]);
+
   return (
-    <div className="flex w-full max-w-sm flex-col gap-4">
-      <div className="space-y-5 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-        <div>
-          <h1 className="text-xl font-semibold">ABC Words</h1>
-          <p className="text-sm text-zinc-500">
-            Halo, <span className="font-medium text-zinc-800 dark:text-zinc-200">{user?.name}</span>
-            {" · "}
-            <button type="button" onClick={signOut} className="text-blue-600 hover:underline">
-              ganti nama
-            </button>
-            {" · "}
-            <Link href="/cara-main" className="text-blue-600 hover:underline">
-              cara main
-            </Link>
-          </p>
-          {connection === "reconnecting" && (
-            <p className="mt-1 text-xs text-amber-600">Menghubungkan ulang ke server…</p>
-          )}
-          {roomNotice && (
-            <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-              {roomNotice}
-            </p>
-          )}
+    <div className="flex w-full flex-col gap-8">
+      <div ref={cardRef} className="note-card flex w-full max-w-md scroll-mt-6 flex-col gap-5 p-5 sm:p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 className="text-2xl font-bold">Halo, {user?.name}</h2>
+          <button type="button" onClick={signOut} className={`${linkButton} text-sm`}>
+            Ganti nama
+          </button>
         </div>
 
-        <div role="tablist" className="grid grid-cols-2 rounded-md bg-zinc-100 p-1 text-sm dark:bg-zinc-900">
+        {connection === "reconnecting" && <p className={noticeClass}>Menghubungkan ulang ke server…</p>}
+        {roomNotice && <p className={noticeClass}>{roomNotice}</p>}
+
+        <div role="tablist" aria-label="Cara masuk room" className="grid grid-cols-2 gap-2">
           {TABS.map((t) => (
             <button
               key={t.id}
+              id={`tab-${t.id}`}
               role="tab"
               type="button"
               aria-selected={tab === t.id}
+              aria-controls={`panel-${t.id}`}
               onClick={() => switchTab(t.id)}
-              className={`rounded px-3 py-1.5 font-medium transition-colors ${
+              className={`rounded-xl border-2 px-3 py-2 text-sm font-semibold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen ${
                 tab === t.id
-                  ? "bg-white shadow-sm dark:bg-zinc-800"
-                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                  ? "border-ink bg-ink text-paper"
+                  : "border-ink/30 bg-white text-ink-soft hover:border-ink hover:text-ink"
               }`}
             >
               {t.label}
@@ -101,32 +115,29 @@ export default function Lobby() {
           ))}
         </div>
 
-        {tab === "join" && notice && (
-          <p className="rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
-            {notice}
-          </p>
-        )}
-
-        {tab === "create" ? (
-          <CreateRoomForm />
-        ) : (
-          <JoinRoomForm
-            code={code}
-            onCodeChange={(value) => {
-              setCode(value);
-              setNotice(null);
-            }}
-            codeLocked={codeLocked}
-            onUnlockCode={() => {
-              setCodeLocked(false);
-              setCode("");
-            }}
-            selectionId={selectionId}
-          />
-        )}
+        <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`} className="flex flex-col gap-4">
+          {tab === "join" && notice && <p className={noticeClass}>{notice}</p>}
+          {tab === "create" ? (
+            <CreateRoomForm />
+          ) : (
+            <JoinRoomForm
+              code={code}
+              onCodeChange={(value) => {
+                setCode(value);
+                setNotice(null);
+              }}
+              codeLocked={codeLocked}
+              onUnlockCode={() => {
+                setCodeLocked(false);
+                setCode("");
+              }}
+              selectionId={selectionId}
+            />
+          )}
+        </div>
       </div>
 
-      <RoomList onSelect={handleSelectRoom} />
+      <RoomList onSelect={selectRoom} />
     </div>
   );
 }

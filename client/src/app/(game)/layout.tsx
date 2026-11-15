@@ -1,7 +1,10 @@
+/** Every page is written on the same notebook sheet; content stays in a phone-to-tablet column. */
 export default function GameLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex flex-1 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
-      <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center">{children}</div>
+    <main className="paper flex flex-1 flex-col">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center py-6 pr-4 pl-10 sm:py-10 sm:pr-8 sm:pl-20">
+        {children}
+      </div>
     </main>
   );
 }

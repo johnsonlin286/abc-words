@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { listRooms } from "@/lib/api";
 import { getGameSocket } from "@/lib/game-socket";
+import { errorText, linkButton } from "@/components/ui";
 import type { RoomSummary } from "@/shared/contract";
 
 type Props = {
@@ -12,30 +13,25 @@ type Props = {
 
 export function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
   return (
-    <span
-      className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-        isPrivate
-          ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-          : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-      }`}
-    >
-      {isPrivate ? "🔒 Privat" : "🌐 Publik"}
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border-2 border-ink bg-white px-2 py-0.5 text-xs font-semibold text-ink">
+      <span aria-hidden>{isPrivate ? "🔒" : "🌐"}</span>
+      {isPrivate ? "Privat" : "Publik"}
     </span>
   );
 }
 
 /** Where a room stands for someone in the lobby. Only rooms that haven't started and have space can be joined. */
 export function getRoomStatus(room: RoomSummary): { label: string; dot: string; joinable: boolean } {
-  if (room.locked) return { label: "Sedang bermain", dot: "bg-amber-500", joinable: false };
-  if (room.memberCount >= room.maxMembers) return { label: "Ruangan penuh", dot: "bg-red-500", joinable: false };
-  return { label: "Belum mulai", dot: "bg-emerald-500", joinable: true };
+  if (room.locked) return { label: "Sedang bermain", dot: "bg-[#e0a21b]", joinable: false };
+  if (room.memberCount >= room.maxMembers) return { label: "Ruangan penuh", dot: "bg-redpen", joinable: false };
+  return { label: "Belum mulai", dot: "bg-success", joinable: true };
 }
 
 export function RoomStatusLabel({ room }: { room: RoomSummary }) {
   const status = getRoomStatus(room);
   return (
-    <span className="flex shrink-0 items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
-      <span aria-hidden className={`h-2 w-2 rounded-full ${status.dot}`} />
+    <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-ink-soft">
+      <span aria-hidden className={`size-2.5 rounded-full ${status.dot}`} />
       {status.label}
     </span>
   );
@@ -66,31 +62,30 @@ export function useLiveRoomData() {
 export default function RoomList({ onSelect }: Props) {
   const rooms = useQuery({ queryKey: ["rooms"], queryFn: listRooms, retry: false });
   useLiveRoomData();
+  const count = rooms.data?.length;
 
   return (
-    <section className="w-full max-w-sm space-y-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex items-center justify-between">
-        <h2 className="font-medium">
-          Room tersedia {rooms.data && <span className="text-zinc-400">({rooms.data.length})</span>}
+    <section aria-labelledby="room-list-title" className="flex w-full max-w-md flex-col gap-3">
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 id="room-list-title" className="text-lg font-bold">
+          Room yang buka{count !== undefined && <span className="text-ink-faint"> ({count})</span>}
         </h2>
         <button
           type="button"
-          className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+          className={`${linkButton} shrink-0 text-sm whitespace-nowrap`}
           onClick={() => rooms.refetch()}
           disabled={rooms.isFetching}
         >
-          {rooms.isFetching ? "memuat…" : "muat ulang"}
+          {rooms.isFetching ? "Memuat…" : "Muat ulang"}
         </button>
       </div>
 
-      {rooms.isPending && !rooms.isError && <p className="text-sm text-zinc-500">Memuat daftar room…</p>}
-      {rooms.isError && <p className="text-sm text-red-600">{rooms.error.message}</p>}
-      {rooms.data?.length === 0 && (
-        <p className="text-sm text-zinc-500">Belum ada room. Buat yang pertama!</p>
-      )}
+      {rooms.isPending && !rooms.isError && <p className="text-ink-soft">Memuat daftar room…</p>}
+      {rooms.isError && <p className={errorText}>{rooms.error.message}</p>}
+      {count === 0 && <p className="text-ink-soft">Belum ada room yang buka. Buat room dan ajak temanmu.</p>}
 
       {rooms.data && rooms.data.length > 0 && (
-        <ul className="max-h-80 space-y-2 overflow-y-auto">
+        <ul className="flex max-h-[26rem] flex-col gap-2.5 overflow-y-auto p-1">
           {rooms.data.map((room) => {
             const { joinable } = getRoomStatus(room);
             return (
@@ -99,15 +94,16 @@ export default function RoomList({ onSelect }: Props) {
                   type="button"
                   disabled={!joinable}
                   onClick={() => onSelect(room)}
-                  className="flex w-full items-center gap-3 rounded-md border border-zinc-200 px-3 py-2 text-left transition-colors hover:border-blue-500 hover:bg-blue-50/50 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:hover:border-zinc-200 dark:disabled:bg-zinc-900 disabled:hover:bg-transparent dark:border-zinc-800 dark:hover:bg-blue-950/20"
+                  aria-label={`Room ${room.id}, host ${room.hostName ?? "tidak ada"}, ${room.memberCount} dari ${room.maxMembers} pemain, ${getRoomStatus(room).label}`}
+                  className="flex w-full items-center gap-3 rounded-xl border-2 border-ink bg-white px-3.5 py-2.5 text-left hover:bg-highlight-soft focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen disabled:cursor-not-allowed disabled:border-ink/25 disabled:bg-paper disabled:hover:bg-paper"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="font-mono text-sm font-semibold tracking-widest">{room.id}</p>
-                    <p className="truncate text-xs text-zinc-500">
-                      Host: {room.hostName ?? "—"} · {room.memberCount}/{room.maxMembers} pemain
+                    <p className="text-lg leading-tight font-bold tracking-[0.15em] tabular-nums">{room.id}</p>
+                    <p className="truncate text-sm text-ink-soft">
+                      Host {room.hostName ?? "—"}, {room.memberCount}/{room.maxMembers} pemain
                     </p>
                   </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
                     <VisibilityBadge isPrivate={room.hasPassword} />
                     <RoomStatusLabel room={room} />
                   </div>

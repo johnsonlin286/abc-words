@@ -5,7 +5,7 @@ import SignInForm from "@/components/sign-in-form";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore } from "@/stores/room-store";
 
-function Connected({ children }: { children: React.ReactNode }) {
+export function Connected({ children }: { children: React.ReactNode }) {
   const start = useRoomStore((s) => s.start);
 
   // Reconnects with the stored session after a refresh; the server puts us back in our room.
@@ -29,5 +29,9 @@ export default function SessionGate({ children }: { children: React.ReactNode })
   }, []);
 
   if (!hydrated) return null;
-  return signedIn ? <Connected>{children}</Connected> : <SignInForm />;
+  return signedIn ? (
+    <Connected>{children}</Connected>
+  ) : (
+    <SignInForm title="Masuk untuk bergabung" message="Kamu diundang ke sebuah room. Tulis namamu dulu." autoFocus />
+  );
 }
