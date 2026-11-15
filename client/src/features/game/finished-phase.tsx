@@ -1,14 +1,16 @@
 "use client";
 
-import { Trophy } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
+import bronze from "@/assets/trophies/bronze.webp";
+import gold from "@/assets/trophies/gold.webp";
+import silver from "@/assets/trophies/silver.webp";
 import { buttonPrimary, errorText, hint } from "@/components/ui";
 import { rankPlayers } from "@/shared/game";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 
-/** Rank badge: the winners get the highlighter, everyone else plain paper. */
-const rankClass = (rank: number) =>
-  rank === 1 ? "bg-highlight border-ink" : "bg-white border-ink/30 text-ink-soft";
+/** Trophy stickers for the top three ranks (ties share a rank, so share a trophy). */
+const TROPHIES = [gold, silver, bronze];
 
 export default function FinishedPhase({ room, isHost }: { room: GameRoomView; isHost: boolean }) {
   const endGame = useRoomStore((s) => s.endGame);
@@ -24,9 +26,7 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
       <div className="flex flex-col items-center gap-3 text-center">
         {winners.length > 0 ? (
           <>
-            <span className="letter-stamp grid size-16 place-items-center rounded-full border-2 border-ink bg-highlight shadow-[3px_3px_0_var(--color-ink)]">
-              <Trophy aria-hidden className="size-8" strokeWidth={2.25} />
-            </span>
+            <Image src={gold} alt="" sizes="96px" loading="eager" className="letter-stamp h-24 w-auto" />
             <p className="font-hand text-xl text-redpen">{winners.length > 1 ? "Juara bersama!" : "Juaranya!"}</p>
             <p className="text-5xl leading-tight font-bold break-words sm:text-6xl">
               <span className="relative isolate inline-block">
@@ -49,11 +49,22 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
       <ol aria-label="Peringkat" className="flex flex-col">
         {ranking.map((p) => (
           <li key={p.userId} className="flex items-center gap-3 border-b-2 border-paper-line py-2.5 last:border-0">
-            <span
-              className={`grid size-9 shrink-0 place-items-center rounded-full border-2 font-bold tabular-nums ${rankClass(p.rank)}`}
-            >
-              {p.rank}
-            </span>
+            {p.score > 0 && p.rank <= TROPHIES.length ? (
+              <span className="flex h-10 w-9 shrink-0 items-end justify-center">
+                {/* Silver and bronze are drawn smaller than gold; keep that difference. */}
+                <Image
+                  src={TROPHIES[p.rank - 1]}
+                  alt={`Peringkat ${p.rank}`}
+                  sizes="40px"
+                  className="w-auto"
+                  style={{ height: `${(TROPHIES[p.rank - 1].height / gold.height) * 2.5}rem` }}
+                />
+              </span>
+            ) : (
+              <span className="grid size-9 shrink-0 place-items-center rounded-full border-2 border-ink/30 bg-white font-bold text-ink-soft tabular-nums">
+                {p.rank}
+              </span>
+            )}
             <span className="min-w-0 flex-1 text-lg font-semibold break-all">{p.name}</span>
             <span className="text-xl font-bold tabular-nums">{p.score}</span>
           </li>

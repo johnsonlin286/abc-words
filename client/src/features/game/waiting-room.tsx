@@ -49,7 +49,7 @@ export default function WaitingRoom({ room, myId }: { room: GameRoomView; myId: 
             type="button"
             disabled={!canStart || starting}
             onClick={handleStart}
-            className={`${buttonPrimary} px-6 py-3 text-lg`}
+            className={`${buttonPrimary} shrink-0 px-6 py-3 text-lg whitespace-nowrap`}
           >
             <Play aria-hidden className="size-5 fill-current" strokeWidth={2.5} />
             {starting ? "Memulai…" : "Mulai permainan"}
