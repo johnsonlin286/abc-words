@@ -4,6 +4,8 @@ const isDev = process.env.NODE_ENV !== "production";
 /** NESIO backend (REST + Socket.IO); same default as src/lib/api.ts. */
 const apiUrl = new URL(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001");
 const apiSocket = `${apiUrl.protocol === "https:" ? "wss:" : "ws:"}//${apiUrl.host}`;
+/** Dev only: this machine's LAN IP, so a phone on the same Wi-Fi can open the dev server (see launch.json). */
+const lanHost = isDev ? process.env.DEV_LAN_HOST : undefined;
 
 /**
  * Second line of defence against XSS: even if some text ever ended up rendered as HTML,
@@ -16,7 +18,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
-  `connect-src 'self' ${apiUrl.origin} ${apiSocket}${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""}`,
+  `connect-src 'self' ${apiUrl.origin} ${apiSocket}${isDev ? " ws://localhost:* ws://127.0.0.1:*" : ""}${lanHost ? ` ws://${lanHost}:*` : ""}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -33,6 +35,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  ...(lanHost && { allowedDevOrigins: [lanHost] }),
   partialPrefetching: true,
   turbopack: {
     rules: {

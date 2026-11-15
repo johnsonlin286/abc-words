@@ -4,13 +4,37 @@
     {
       "name": "next-dev",
       "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["-c", "PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" npm --prefix client run dev"],
+      "runtimeArgs": [
+        "-c",
+        "PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" npm --prefix client run dev"
+      ],
       "port": 3000
     },
     {
       "name": "backend",
       "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["-c", "PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" npm --prefix backend run dev"],
+      "runtimeArgs": [
+        "-c",
+        "PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" npm --prefix backend run dev"
+      ],
+      "port": 3001
+    },
+    {
+      "name": "next-dev-lan",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "IP=$(ipconfig getifaddr en0); PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" DEV_LAN_HOST=$IP NEXT_PUBLIC_API_URL=http://$IP:3001 npm --prefix client run dev -- -H 0.0.0.0"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "backend-lan",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "IP=$(ipconfig getifaddr en0); PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" CORS_ORIGIN=http://localhost:3000,http://$IP:3000 npm --prefix backend run dev"
+      ],
       "port": 3001
     }
   ]
