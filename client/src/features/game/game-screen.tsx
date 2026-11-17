@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { buttonGhost } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore } from "@/stores/room-store";
 import { AfkNotice, isAfk } from "./afk";
@@ -16,20 +14,6 @@ import RoomBar from "./room-bar";
 import ScoreStrip from "./score-strip";
 import VotingPhase from "./voting-phase";
 import WaitingRoom from "./waiting-room";
-
-function EndGameButton() {
-  const endGame = useRoomStore((s) => s.endGame);
-  const [error, setError] = useState<string | null>(null);
-
-  return (
-    <div className="flex flex-wrap items-center gap-3">
-      <button type="button" className={`${buttonGhost} -ml-4 text-sm text-ink-soft`} onClick={async () => setError(await endGame())}>
-        Akhiri permainan
-      </button>
-      {error && <p className="text-sm font-semibold text-redpen">{error}</p>}
-    </div>
-  );
-}
 
 /**
  * The room page, written on the notebook: room code and letters on the paper, the current
@@ -48,7 +32,7 @@ export default function GameScreen() {
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <RoomBar room={room} />
+      <RoomBar room={room} canEnd={playing && room.hostId === myId} />
       <AlphabetStrip used={crossedOut} />
       {playing && <ScoreStrip room={room} />}
 
@@ -62,8 +46,6 @@ export default function GameScreen() {
         {phase === "result" && reveal && <ResultPhase room={room} letter={reveal.letter} />}
         {phase === "finished" && <FinishedPhase room={room} isHost={room.hostId === myId} />}
       </section>
-
-      {playing && room.hostId === myId && <EndGameButton />}
 
       <ChatPanel />
     </div>

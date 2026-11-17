@@ -19,6 +19,7 @@ import {
   POINTS,
   REJECT_REASONS,
   REJECTIONS,
+  REVEAL_MS,
   VOTING_MS,
   formatPoints,
 } from "@/shared/game";
@@ -55,7 +56,8 @@ export const STEPS = [
     body: [
       "Semua angka dijumlahkan lalu dihitung dari A: 1 = A, 26 = Z, 27 kembali ke A.",
       "Huruf yang sudah pernah keluar dilompati ke huruf berikutnya.",
-      'Hurufnya sulit? Tekan "Ganti huruf" saat huruf baru keluar. Kalau lebih dari separuh pemain setuju, huruf itu dicoret dan diganti huruf acak yang belum pernah keluar (bisa lebih mudah, bisa juga lebih sulit). Paling banyak sekali per ronde.',
+      `Hurufnya sulit? Saat huruf baru keluar, kamu punya ${seconds(REVEAL_MS)} untuk memilih "Ganti huruf" atau "Tetap". Kalau lebih dari separuh pemain memilih ganti, huruf itu dicoret dan diganti huruf acak yang belum pernah keluar (bisa lebih mudah, bisa juga lebih sulit). Paling banyak sekali per ronde.`,
+      'Begitu hasilnya pasti (separuh pemain memilih "Tetap", atau huruf sudah diganti), permainan langsung lanjut tanpa menunggu waktu habis.',
     ],
   },
   {
@@ -89,4 +91,4 @@ export const CHAT_RULES = [
 ];
 
 export const SCORE_NOTE =
-  "Skor tidak bisa di bawah 0. Skor tertinggi setelah ronde terakhir menang; skor sama berarti juara bersama.";
+  "Skor tidak bisa di bawah 0. Skor tertinggi setelah ronde terakhir menang. Kalau skor sama, yang rata-rata menjawab lebih cepat (dihitung dari jawaban yang lolos, sampai milidetik) di atas; kalau itu pun sama, juara bersama.";

@@ -5,12 +5,14 @@ import { useState } from "react";
 import { VisibilityBadge } from "@/components/room-list";
 import { copyText } from "@/lib/clipboard";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
+import EndGameDialog from "./end-game-dialog";
 import RulesDialog from "./rules-dialog";
 
 const action =
   "inline-flex items-center gap-1.5 rounded-md text-sm font-semibold text-ink underline decoration-highlight decoration-2 underline-offset-4 hover:decoration-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen";
 
-export default function RoomBar({ room }: { room: GameRoomView }) {
+/** `canEnd`: the host, while a game is running. */
+export default function RoomBar({ room, canEnd }: { room: GameRoomView; canEnd: boolean }) {
   const leaveRoom = useRoomStore((s) => s.leaveRoom);
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
 
@@ -43,6 +45,7 @@ export default function RoomBar({ room }: { room: GameRoomView }) {
           <LogOut aria-hidden className="size-4" strokeWidth={2.5} />
           Keluar room
         </button>
+        {canEnd && <EndGameDialog className={`${action} text-redpen decoration-redpen/30 hover:decoration-redpen`} />}
       </div>
     </header>
   );

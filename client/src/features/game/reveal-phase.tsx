@@ -14,7 +14,10 @@ import { RoundTitle } from "./round-header";
 
 const STEP_MS = 250;
 
-/** "Hurufnya sulit?": players vote to replace the letter; more than half of the active players changes it. */
+/**
+ * "Hurufnya sulit?": each player picks "Ganti huruf" or "Tetap". More than half of the active
+ * players wanting a change replaces the letter; half or more keeping it starts answering at once.
+ */
 function LetterVote({ room, delayMs }: { room: GameRoomView; delayMs: number }) {
   const myId = useAuthStore((s) => s.user?.userId);
   const setLetterVote = useRoomStore((s) => s.setLetterVote);
@@ -24,8 +27,17 @@ function LetterVote({ room, delayMs }: { room: GameRoomView; delayMs: number }) 
   const active = room.members.filter((m) => m.isConnected && !isAfk(room.state, m.userId));
   const votes = room.state.letterVotes.filter((id) => active.some((m) => m.userId === id)).length;
   const needed = Math.floor(active.length / 2) + 1;
-  const iVoted = myId !== undefined && room.state.letterVotes.includes(myId);
+  const mine =
+    myId === undefined
+      ? null
+      : room.state.letterVotes.includes(myId)
+        ? "change"
+        : room.state.letterKeeps.includes(myId)
+          ? "keep"
+          : null;
   const canVote = myId !== undefined && active.some((m) => m.userId === myId);
+  const choose = async (choice: "change" | "keep") => setError(await setLetterVote(mine === choice ? null : choice));
+  const option = (selected: boolean) => `${buttonSecondary} px-4 py-2 text-sm ${selected ? "bg-highlight-soft" : ""}`;
 
   return (
     <div className="ink-appear space-y-2" style={{ animationDelay: `${delayMs}ms` }}>
@@ -38,14 +50,14 @@ function LetterVote({ room, delayMs }: { room: GameRoomView; delayMs: number }) 
           suara untuk ganti huruf.
         </p>
         {canVote && (
-          <button
-            type="button"
-            aria-pressed={iVoted}
-            onClick={async () => setError(await setLetterVote(!iVoted))}
-            className={`${buttonSecondary} px-4 py-2 text-sm ${iVoted ? "bg-highlight-soft" : ""}`}
-          >
-            {iVoted ? "Batal ganti" : "Ganti huruf"}
-          </button>
+          <div role="group" aria-label="Pilihan huruf" className="flex gap-2">
+            <button type="button" aria-pressed={mine === "change"} onClick={() => choose("change")} className={option(mine === "change")}>
+              Ganti huruf
+            </button>
+            <button type="button" aria-pressed={mine === "keep"} onClick={() => choose("keep")} className={option(mine === "keep")}>
+              Tetap
+            </button>
+          </div>
         )}
       </div>
       {error && <p className={errorText}>{error}</p>}

@@ -43,7 +43,7 @@ npm --prefix backend run typecheck
 npm --prefix client run build
 ```
 
-`.claude/launch.json` has `next-dev` / `backend` (localhost) and `next-dev-lan` / `backend-lan`. The `-lan` pair reads the Mac's Wi-Fi IP (`ipconfig getifaddr en0`) so a phone on the same network can play at `http://<that IP>:3000`. The owner playtests this way, so give them the current IP.
+`.claude/launch.json` has `next-dev` / `backend` (localhost) and `next-dev-lan` / `backend-lan`. The `-lan` pair reads the Mac's Wi-Fi IP (`ipconfig getifaddr en0`) so a phone on the same network can play at `http://<that IP>:3100` (backend on 3101; fixed ports with `autoPort: false`, because 3000/3001 are often taken by other projects on this Mac). The owner playtests this way, so give them the current IP.
 
 Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SITE_URL` (absolute URL for link previews; production value pending, no domain yet).
 
@@ -62,7 +62,7 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
 - 3–8 players; the host can't start with fewer than 3 online. A running game ends when fewer than 3 remain (after a 30 s reconnect grace).
 - Up to 10 rounds; the host picks the category and round count.
 - Picking takes 10 s. Letter = `(sum − 1) % 26`; a letter already used skips to the next unused one.
-- During the reveal, more than half of the active players can vote once per round to swap the letter for a random unused one.
+- The reveal lasts up to 20 s: each player picks "Ganti huruf" or "Tetap". More than half wanting a change swaps the letter for a random unused one (once per round); half or more keeping it starts answering at once.
 - Answering takes 30 s:
   - One answer each, letters and spaces only, no duplicates within a game.
   - Paste is blocked, and answers within 1 s of the phase start are rejected.
@@ -71,6 +71,7 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
   - Rejecting needs a reason (off-category / misspelled / not-a-word), and votes are public.
   - An answer fails only with **at least 2 rejections and more than half of the other online players**. One player can never fail an answer alone; that is why the minimum is 3.
   - Each player has 3 rejections per game, refunded when the answer fails with support.
+- Ranking: score, then the faster average answer time (accepted answers only, ms from the start of answering, measured by the server). Equal on both shares the rank.
 - Points: accepted +1, failed −2, no answer −1. Rejecting alone an answer that still passes is free the 1st time, a ⚠ 2/3 warning the 2nd, and −1 from the 3rd on. Scores never go below 0.
 - Anti-abuse:
   - Answer spam: 3 rejected tries in 5 s pauses answering for 3 s.

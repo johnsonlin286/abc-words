@@ -6,7 +6,7 @@ import bronze from "@/assets/trophies/bronze.webp";
 import gold from "@/assets/trophies/gold.webp";
 import silver from "@/assets/trophies/silver.webp";
 import { buttonPrimary, errorText, hint } from "@/components/ui";
-import { rankPlayers } from "@/shared/game";
+import { formatAnswerTime, rankPlayers } from "@/shared/game";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 
 /** Trophy stickers for the top three ranks (ties share a rank, so share a trophy). */
@@ -16,9 +16,11 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
   const endGame = useRoomStore((s) => s.endGame);
   const [error, setError] = useState<string | null>(null);
 
-  const ranking = rankPlayers(room.members, room.state.scores);
+  const ranking = rankPlayers(room.members, room.state.scores, room.state.speed);
   const topScore = ranking[0]?.score ?? 0;
-  const winners = topScore > 0 ? ranking.filter((p) => p.score === topScore) : [];
+  const winners = topScore > 0 ? ranking.filter((p) => p.rank === 1) : [];
+  // Same score as the winner but ranked lower: the answer time decided it, so say so.
+  const outpaced = winners.length > 0 ? ranking.filter((p) => p.score === topScore && p.rank > 1) : [];
   const hostName = room.members.find((m) => m.userId === room.hostId)?.name;
 
   return (
@@ -40,6 +42,11 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
             <p className="text-lg font-bold">
               <span className="tabular-nums">{topScore}</span> poin
             </p>
+            {outpaced.length > 0 && (
+              <p className="max-w-sm font-hand text-lg leading-snug text-redpen">
+                Poinnya sama dengan {outpaced.map((p) => p.name).join(" & ")}, tapi rata-rata menjawab lebih cepat.
+              </p>
+            )}
           </>
         ) : (
           <p className="text-3xl font-bold">Tidak ada yang mendapat poin</p>
@@ -65,7 +72,14 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
                 {p.rank}
               </span>
             )}
-            <span className="min-w-0 flex-1 text-lg font-semibold break-all">{p.name}</span>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="text-lg font-semibold break-all">{p.name}</span>
+              {p.avgMs !== null && (
+                <span className="text-sm font-medium text-ink-soft">
+                  Rata-rata kecepatan jawab: <span className="tabular-nums">{formatAnswerTime(p.avgMs)}</span>
+                </span>
+              )}
+            </span>
             <span className="text-xl font-bold tabular-nums">{p.score}</span>
           </li>
         ))}

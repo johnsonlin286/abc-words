@@ -40,6 +40,8 @@ export const REJECTIONS = 3;
 export const MIN_REJECTIONS_TO_FAIL = 2;
 /** Phase lengths for the rules page; same as `DEFAULT_TIMING` in backend/src/modules/abc-words. */
 export const PICK_MS = 10_000;
+/** Longest the letter stays up for the "ganti huruf" vote; ends early once the vote is decided. */
+export const REVEAL_MS = 20_000;
 export const ANSWER_MS = 30_000;
 export const LAST_PLAYER_MS = 10_000;
 export const VOTING_MS = 20_000;
@@ -112,6 +114,8 @@ export type GameState = ChatState & {
     name: string;
     text: string;
     at: number;
+    /** Milliseconds from the start of answering until the server received this answer. */
+    ms: number;
     rejectedBy: { userId: string; name: string; reason: RejectReason }[];
     /** Voting result; null until voting ends. */
     accepted: boolean | null;
@@ -129,11 +133,17 @@ export type GameState = ChatState & {
   penalties: Penalty[];
   /** Players who want this round's letter changed (reveal phase). */
   letterVotes: string[];
+  /** Players who chose to keep this round's letter (reveal phase). */
+  letterKeeps: string[];
   /** Lone rejections per player in this game (public). */
   loneRejections: Record<string, number>;
   /** Rounds in a row each player neither picked nor answered; see `AFK_ROUNDS`. */
   idleRounds: Record<string, number>;
+  /** Answer time per player in this game, accepted answers only; breaks score ties. */
+  speed: Record<string, AnswerSpeed>;
 };
+
+export type AnswerSpeed = { totalMs: number; count: number };
 
 export type Penalty = {
   userId: string;
@@ -158,15 +168,44 @@ export type RevealInfo = {
   changedFrom: string | null;
 };
 
-/** Players still in the room, best score first. Equal scores share a rank. */
+export type RankedPlayer = {
+  userId: string;
+  name: string;
+  score: number;
+  /** Average answer time over accepted answers, in whole ms; null without any accepted answer. */
+  avgMs: number | null;
+  rank: number;
+};
+
+/**
+ * Players still in the room, best first: higher score, then the faster average answer time
+ * (accepted answers only, to the millisecond). Players equal on both share a rank.
+ */
 export function rankPlayers(
   members: { userId: string; name: string }[],
   scores: Record<string, number>,
-): { userId: string; name: string; score: number; rank: number }[] {
-  const sorted = members
-    .map((m) => ({ userId: m.userId, name: m.name, score: scores[m.userId] ?? 0 }))
-    .sort((a, b) => b.score - a.score);
-  return sorted.map((p) => ({ ...p, rank: sorted.findIndex((o) => o.score === p.score) + 1 }));
+  speed: Record<string, AnswerSpeed>,
+): RankedPlayer[] {
+  const players = members.map((m) => {
+    const s = speed[m.userId];
+    return {
+      userId: m.userId,
+      name: m.name,
+      score: scores[m.userId] ?? 0,
+      avgMs: s && s.count > 0 ? Math.round(s.totalMs / s.count) : null,
+    };
+  });
+  const time = (p: { avgMs: number | null }) => p.avgMs ?? Number.POSITIVE_INFINITY;
+  const ahead = (a: (typeof players)[number], b: (typeof players)[number]) =>
+    a.score > b.score || (a.score === b.score && time(a) < time(b));
+  return players
+    .map((p) => ({ ...p, rank: players.filter((o) => ahead(o, p)).length + 1 }))
+    .sort((a, b) => a.rank - b.rank);
+}
+
+/** "6,214 detik": seconds with milliseconds, Indonesian decimal comma. */
+export function formatAnswerTime(ms: number): string {
+  return `${(ms / 1000).toLocaleString("id-ID", { minimumFractionDigits: 3, maximumFractionDigits: 3 })} detik`;
 }
 
 export function categoryLabel(settings: GameSettings): string {

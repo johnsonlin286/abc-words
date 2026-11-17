@@ -17,7 +17,7 @@ export default function ScoreStrip({ room }: { room: GameRoomView }) {
   const row = useRef<HTMLUListElement>(null);
   const [more, setMore] = useState({ left: false, right: false });
 
-  const ranking = rankPlayers(room.members, room.state.scores);
+  const ranking = rankPlayers(room.members, room.state.scores, room.state.speed);
   const players = [...ranking.filter((p) => p.userId === myId), ...ranking.filter((p) => p.userId !== myId)];
 
   useEffect(() => {

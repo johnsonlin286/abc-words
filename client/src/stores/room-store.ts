@@ -68,8 +68,8 @@ type RoomState = {
   setRejection: (answerUserId: string, reason: RejectReason | null) => Promise<string | null>;
   /** Mark (or unmark) this player as done judging; voting ends once every judge is done. */
   setVotingDone: (done: boolean) => Promise<string | null>;
-  /** Vote (or take back the vote) to replace this round's letter. */
-  setLetterVote: (want: boolean) => Promise<string | null>;
+  /** Vote to replace or keep this round's letter; `null` takes the vote back. */
+  setLetterVote: (choice: "change" | "keep" | null) => Promise<string | null>;
   sendMessage: (text: string) => Promise<boolean>;
   leaveRoom: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -291,7 +291,7 @@ export const useRoomStore = create<RoomState>((set, get) => {
       gameAction("reject", reason ? { answerUserId, rejected: true, reason } : { answerUserId, rejected: false }),
 
     setVotingDone: (done) => gameAction("doneVoting", { done }),
-    setLetterVote: (want) => gameAction("changeLetter", { want }),
+    setLetterVote: (choice) => gameAction("changeLetter", { choice }),
 
     submitAnswer: async (text) => {
       try {
