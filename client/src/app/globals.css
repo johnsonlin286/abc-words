@@ -133,10 +133,43 @@ body {
   animation: pen-draw 600ms ease-in-out both;
 }
 
+/* Invite card (components/room-invite.tsx): the highlighter is swiped under the host's name
+   and the logo is stamped on more gently than a round letter, since it is much wider. */
+@keyframes marker-sweep {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes logo-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.18) rotate(-3deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.marker-sweep {
+  transform-origin: left;
+  animation: marker-sweep 380ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.logo-stamp {
+  animation: logo-stamp 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ink-appear,
   .letter-stamp,
-  .pen-draw {
+  .pen-draw,
+  .marker-sweep,
+  .logo-stamp {
     animation: none;
   }
 }

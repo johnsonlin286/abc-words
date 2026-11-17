@@ -19,7 +19,14 @@ export function Connected({ children }: { children: React.ReactNode }) {
  * their segment on the server): asks for a name first, without changing the URL,
  * so someone opening an invite link lands back on that room after signing in.
  */
-export default function SessionGate({ children }: { children: React.ReactNode }) {
+export default function SessionGate({
+  children,
+  signedOut,
+}: {
+  children: React.ReactNode;
+  /** Shown instead of the plain name form while signed out (e.g. the invite card on /room/[code]). */
+  signedOut?: React.ReactNode;
+}) {
   const hydrated = useAuthStore((s) => s.hydrated);
   const signedIn = useAuthStore((s) => s.user !== null);
 
@@ -31,6 +38,8 @@ export default function SessionGate({ children }: { children: React.ReactNode })
   if (!hydrated) return null;
   return signedIn ? (
     <Connected>{children}</Connected>
+  ) : signedOut ? (
+    signedOut
   ) : (
     <SignInForm title="Masuk untuk bergabung" message="Kamu diundang ke sebuah room. Tulis namamu dulu." autoFocus />
   );
