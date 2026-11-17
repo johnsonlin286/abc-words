@@ -24,18 +24,20 @@
       "runtimeExecutable": "/bin/sh",
       "runtimeArgs": [
         "-c",
-        "IP=$(ipconfig getifaddr en0); PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" DEV_LAN_HOST=$IP NEXT_PUBLIC_API_URL=http://$IP:3001 npm --prefix client run dev -- -H 0.0.0.0"
+        "IP=$(ipconfig getifaddr en0); PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" DEV_LAN_HOST=$IP NEXT_PUBLIC_API_URL=http://$IP:3101 npm --prefix client run dev -- -H 0.0.0.0 -p 3100"
       ],
-      "port": 3000
+      "port": 3100,
+      "autoPort": false
     },
     {
       "name": "backend-lan",
       "runtimeExecutable": "/bin/sh",
       "runtimeArgs": [
         "-c",
-        "IP=$(ipconfig getifaddr en0); PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" CORS_ORIGIN=http://localhost:3000,http://$IP:3000 npm --prefix backend run dev"
+        "IP=$(ipconfig getifaddr en0); PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" PORT=3101 CORS_ORIGIN=http://localhost:3100,http://$IP:3100 npm --prefix backend run dev"
       ],
-      "port": 3001
+      "port": 3101,
+      "autoPort": false
     }
   ]
 }
