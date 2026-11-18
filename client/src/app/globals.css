@@ -164,12 +164,31 @@ body {
   animation: logo-stamp 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+/* Number picker, first round only: each button wiggles once, a "tap me" for new players. */
+@keyframes tap-nudge {
+  0%,
+  100% {
+    transform: none;
+  }
+  30% {
+    transform: translateY(-5px) rotate(-3deg);
+  }
+  60% {
+    transform: translateY(0) rotate(2deg);
+  }
+}
+
+.tap-nudge {
+  animation: tap-nudge 480ms ease-in-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ink-appear,
   .letter-stamp,
   .pen-draw,
   .marker-sweep,
-  .logo-stamp {
+  .logo-stamp,
+  .tap-nudge {
     animation: none;
   }
 }
