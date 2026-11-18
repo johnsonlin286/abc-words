@@ -30,7 +30,7 @@ function Pencil({ className }: { className?: string }) {
   );
 }
 
-const LISTED = ["hewan", "negara", "kota"] as const;
+const LISTED = ["hewan", "negara", "kota", "buah-sayur"] as const;
 
 /**
  * A torn-off note of the categories a room can play, ticked in red pen with a pencil on it.

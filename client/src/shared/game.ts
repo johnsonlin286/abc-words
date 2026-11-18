@@ -61,6 +61,7 @@ export const CATEGORIES = [
   { id: "negara", label: "Negara" },
   { id: "hewan", label: "Hewan" },
   { id: "kota", label: "Kota" },
+  { id: "buah-sayur", label: "Buah & Sayur" },
   { id: "custom", label: "Lainnya" },
 ] as const;
 

@@ -60,7 +60,7 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
 ## Game rules (current)
 
 - 3–8 players; the host can't start with fewer than 3 online. A running game ends when fewer than 3 remain (after a 30 s reconnect grace).
-- Up to 10 rounds; the host picks the category and round count.
+- Up to 10 rounds; the host picks the category (Negara, Hewan, Kota, Buah & Sayur, or a custom "Lainnya") and round count.
 - Picking takes 10 s. Letter = `(sum − 1) % 26`; a letter already used skips to the next unused one.
 - The reveal lasts up to 20 s: each player picks "Ganti huruf" or "Tetap". More than half wanting a change swaps the letter for a random unused one (once per round); half or more keeping it starts answering at once.
 - Answering takes 30 s:
@@ -68,7 +68,7 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
   - Paste is blocked, and answers within 1 s of the phase start are rejected.
   - The last player left gets a short final countdown.
 - Voting takes 20 s:
-  - Answers found in the category's word list are **verified**: they pass without a vote and can't be rejected; voting is skipped when every answer is verified. Lists live in `backend/src/modules/abc-words/words/` and are built by `backend/scripts/word-lists/*.ts` (Negara from CLDR, Kota from GeoNames CC BY 4.0, Hewan from Wordnet Bahasa (MIT) + PWN noun.animal, filtered, plus a hand-written list; sources credited on the rules page). Answers not in a list still go to the vote, never auto-fail.
+  - Answers found in the category's word list are **verified**: they pass without a vote and can't be rejected; voting is skipped when every answer is verified. Lists live in `backend/src/modules/abc-words/words/` and are built by `backend/scripts/word-lists/*.ts` (Negara from CLDR, Kota from GeoNames CC BY 4.0, Hewan from Wordnet Bahasa (MIT) + PWN noun.animal, filtered, plus a hand-written list, Buah & Sayur hand-written; sources credited on the rules page). Answers not in a list still go to the vote, never auto-fail.
   - Rejecting needs a reason (off-category / misspelled / not-a-word), and votes are public.
   - An answer fails only with **at least 2 rejections and more than half of the other online players**. One player can never fail an answer alone; that is why the minimum is 3.
   - Each player has 3 rejections per game, refunded when the answer fails with support.
