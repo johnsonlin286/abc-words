@@ -60,8 +60,8 @@ export function formatPoints(points: number): string {
 export const CATEGORIES = [
   { id: "bebas", label: "Bebas" },
   { id: "hewan", label: "Hewan" },
-  { id: "lagu", label: "Judul lagu" },
-  { id: "film", label: "Judul film" },
+  { id: "merek", label: "Merek" },
+  { id: "kota", label: "Kota" },
   { id: "negara", label: "Negara" },
   { id: "custom", label: "Lainnya" },
 ] as const;
