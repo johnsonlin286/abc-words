@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 const TIP_WIDTH = 240;
 const EDGE = 8;
@@ -8,8 +9,8 @@ const EDGE = 8;
 /**
  * Small badge next to a player's name that explains itself when tapped
  * (works on touch screens, unlike a `title` tooltip). Escape, a tap elsewhere or scrolling closes it.
- * The tip is `position: fixed` under the badge, so a scrolling parent (the score row) can't clip it,
- * and it is kept inside the screen.
+ * The tip is `position: fixed` under the badge and rendered into <body>: the score row scrolls and
+ * fades its edges with a CSS mask, and a mask hides even fixed descendants. It is kept inside the screen.
  */
 export default function InfoBadge({
   label,
@@ -32,7 +33,9 @@ export default function InfoBadge({
   useEffect(() => {
     if (!open) return;
     const close = (e: PointerEvent | KeyboardEvent) => {
-      if (e instanceof KeyboardEvent ? e.key === "Escape" : !wrapper.current?.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const inside = wrapper.current?.contains(target) || document.getElementById(tipId)?.contains(target);
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !inside) {
         setTip(null);
       }
     };
@@ -48,7 +51,7 @@ export default function InfoBadge({
       window.removeEventListener("scroll", hide, true);
       window.removeEventListener("resize", hide);
     };
-  }, [open]);
+  }, [open, tipId]);
 
   return (
     <span ref={wrapper} className="relative inline-flex">
@@ -69,16 +72,18 @@ export default function InfoBadge({
       >
         {children}
       </button>
-      {tip && (
-        <span
-          id={tipId}
-          role="tooltip"
-          style={{ top: tip.top, left: tip.left, width: Math.min(TIP_WIDTH, window.innerWidth - 2 * EDGE) }}
-          className="fixed z-30 rounded-xl border-2 border-ink bg-white px-3 py-2 text-xs leading-snug font-medium text-ink shadow-[3px_3px_0_var(--color-ink)]"
-        >
-          {explanation}
-        </span>
-      )}
+      {tip &&
+        createPortal(
+          <span
+            id={tipId}
+            role="tooltip"
+            style={{ top: tip.top, left: tip.left, width: Math.min(TIP_WIDTH, window.innerWidth - 2 * EDGE) }}
+            className="fixed z-30 rounded-xl border-2 border-ink bg-white px-3 py-2 text-xs leading-snug font-medium text-ink shadow-[3px_3px_0_var(--color-ink)]"
+          >
+            {explanation}
+          </span>,
+          document.body,
+        )}
     </span>
   );
 }
