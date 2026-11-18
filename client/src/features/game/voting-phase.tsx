@@ -16,6 +16,7 @@ import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 import Countdown from "./countdown";
 import { isAfk } from "./afk";
 import RoundHeader from "./round-header";
+import VerifiedBadge from "./verified-badge";
 import { WarningIcon, warningText } from "./warning-badge";
 
 type Answer = GameState["answers"][number];
@@ -30,10 +31,14 @@ export default function VotingPhase({ room, letter }: { room: GameRoomView; lett
   const [choosingFor, setChoosingFor] = useState<string | null>(null);
 
   const { answers, rejectionsLeft, votingDone, phaseMs } = room.state;
-  // Same rule as the server: online, not AFK, with someone else's answer to judge.
+  // Same rule as the server: online, not AFK, with someone else's unverified answer to judge.
   const judges = room.members.filter(
-    (m) => m.isConnected && !isAfk(room.state, m.userId) && answers.some((a) => a.userId !== m.userId),
+    (m) =>
+      m.isConnected &&
+      !isAfk(room.state, m.userId) &&
+      answers.some((a) => a.userId !== m.userId && !a.verified),
   );
+  const anyVerified = answers.some((a) => a.verified);
   const isJudge = judges.some((m) => m.userId === myId);
   const iAmDone = myId !== undefined && votingDone.includes(myId);
   const doneCount = judges.filter((m) => votingDone.includes(m.userId)).length;
@@ -57,6 +62,12 @@ export default function VotingPhase({ room, letter }: { room: GameRoomView; lett
           kali ke-{LONE_REJECTION_WARNINGS + 1}: {formatPoints(POINTS.loneRejection)} poin.{" "}
           Sisa jatah tolakmu: <span className="rounded-sm bg-highlight px-1 font-bold text-ink tabular-nums">{rejectionsLeft}</span>.
         </p>
+        {anyVerified && (
+          <p className="mt-2 text-sm leading-relaxed font-medium text-ink-soft">
+            Jawaban <span className="font-bold text-success">Terverifikasi</span> ada di daftar kategori ini, jadi
+            langsung lolos dan tidak bisa ditolak.
+          </p>
+        )}
         {myLoneRejections >= LONE_REJECTION_WARNINGS && (
           <p className="mt-2 flex items-start gap-1.5 text-sm font-semibold text-redpen">
             <WarningIcon className="mt-0.5 shrink-0" />
@@ -80,7 +91,9 @@ export default function VotingPhase({ room, letter }: { room: GameRoomView; lett
                   <p className="text-lg font-bold break-words">{a.text}</p>
                   <p className="text-sm font-medium text-ink-soft">{isMine ? "Jawabanmu" : a.name}</p>
                 </div>
-                {!isMine && (
+                {a.verified ? (
+                  <VerifiedBadge />
+                ) : isMine ? null : (
                   <RejectButton
                     answer={a}
                     rejected={myRejection !== undefined}

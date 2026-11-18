@@ -58,11 +58,9 @@ export function formatPoints(points: number): string {
 }
 
 export const CATEGORIES = [
-  { id: "bebas", label: "Bebas" },
-  { id: "hewan", label: "Hewan" },
-  { id: "merek", label: "Merek" },
-  { id: "kota", label: "Kota" },
   { id: "negara", label: "Negara" },
+  { id: "hewan", label: "Hewan" },
+  { id: "kota", label: "Kota" },
   { id: "custom", label: "Lainnya" },
 ] as const;
 
@@ -116,6 +114,8 @@ export type GameState = ChatState & {
     at: number;
     /** Milliseconds from the start of answering until the server received this answer. */
     ms: number;
+    /** In the category's word list (Negara for now): passes without a vote and can't be rejected. */
+    verified: boolean;
     rejectedBy: { userId: string; name: string; reason: RejectReason }[];
     /** Voting result; null until voting ends. */
     accepted: boolean | null;

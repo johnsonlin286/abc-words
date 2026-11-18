@@ -64,10 +64,11 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
 - Picking takes 10 s. Letter = `(sum − 1) % 26`; a letter already used skips to the next unused one.
 - The reveal lasts up to 20 s: each player picks "Ganti huruf" or "Tetap". More than half wanting a change swaps the letter for a random unused one (once per round); half or more keeping it starts answering at once.
 - Answering takes 30 s:
-  - One answer each, letters and spaces only, no duplicates within a game.
+  - One answer each, in Indonesian, letters and spaces only, no duplicates within a game.
   - Paste is blocked, and answers within 1 s of the phase start are rejected.
   - The last player left gets a short final countdown.
 - Voting takes 20 s:
+  - Answers found in the category's word list are **verified**: they pass without a vote and can't be rejected; voting is skipped when every answer is verified. Lists live in `backend/src/modules/abc-words/words/` and are built by `backend/scripts/word-lists/*.ts` (Negara so far; Kota and Hewan next). Answers not in a list still go to the vote, never auto-fail.
   - Rejecting needs a reason (off-category / misspelled / not-a-word), and votes are public.
   - An answer fails only with **at least 2 rejections and more than half of the other online players**. One player can never fail an answer alone; that is why the minimum is 3.
   - Each player has 3 rejections per game, refunded when the answer fails with support.

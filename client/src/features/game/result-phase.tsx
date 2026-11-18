@@ -2,6 +2,7 @@ import { Check, X } from "lucide-react";
 import { POINTS, formatPoints, type Penalty } from "@/shared/game";
 import type { GameRoomView } from "@/stores/room-store";
 import RoundHeader from "./round-header";
+import VerifiedBadge from "./verified-badge";
 import { WarningIcon, strikeLabel } from "./warning-badge";
 import { RejectedBy } from "./voting-phase";
 
@@ -62,7 +63,10 @@ export default function ResultPhase({ room, letter }: { room: GameRoomView; lett
                   >
                     {a.text}
                   </p>
-                  <p className="text-sm font-medium text-ink-soft">{a.name}</p>
+                  <p className="flex flex-wrap items-center gap-x-2 text-sm font-medium text-ink-soft">
+                    {a.name}
+                    {a.verified && <VerifiedBadge compact />}
+                  </p>
                 </div>
                 <span className="flex shrink-0 items-center gap-2 text-sm">
                   <span
