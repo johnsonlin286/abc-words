@@ -79,13 +79,13 @@ export default function HowToPlay({ headingLevel = 2 }: { headingLevel?: 2 | 3 }
         <Bullets items={CHAT_RULES} />
       </section>
 
-      {/* GeoNames data is CC BY 4.0: credit it where players read about verified answers. */}
+      {/* Word-list sources (GeoNames is CC BY 4.0): credited where players read about verified answers. */}
       <p className="text-xs text-ink-faint">
-        Daftar kota untuk jawaban terverifikasi memakai data{" "}
+        Jawaban terverifikasi memakai data Unicode CLDR (negara),{" "}
         <a href="https://www.geonames.org" target="_blank" rel="noreferrer" className="underline underline-offset-2">
           GeoNames
         </a>{" "}
-        (CC BY 4.0).
+        (kota, CC BY 4.0), serta Wordnet Bahasa (MIT) dan Princeton WordNet 3.0 (hewan).
       </p>
     </div>
   );

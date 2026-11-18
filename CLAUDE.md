@@ -68,7 +68,7 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
   - Paste is blocked, and answers within 1 s of the phase start are rejected.
   - The last player left gets a short final countdown.
 - Voting takes 20 s:
-  - Answers found in the category's word list are **verified**: they pass without a vote and can't be rejected; voting is skipped when every answer is verified. Lists live in `backend/src/modules/abc-words/words/` and are built by `backend/scripts/word-lists/*.ts` (Negara from CLDR, Kota from GeoNames CC BY 4.0 with credit on the rules page; Hewan next). Answers not in a list still go to the vote, never auto-fail.
+  - Answers found in the category's word list are **verified**: they pass without a vote and can't be rejected; voting is skipped when every answer is verified. Lists live in `backend/src/modules/abc-words/words/` and are built by `backend/scripts/word-lists/*.ts` (Negara from CLDR, Kota from GeoNames CC BY 4.0, Hewan from Wordnet Bahasa (MIT) + PWN noun.animal, filtered, plus a hand-written list; sources credited on the rules page). Answers not in a list still go to the vote, never auto-fail.
   - Rejecting needs a reason (off-category / misspelled / not-a-word), and votes are public.
   - An answer fails only with **at least 2 rejections and more than half of the other online players**. One player can never fail an answer alone; that is why the minimum is 3.
   - Each player has 3 rejections per game, refunded when the answer fails with support.
