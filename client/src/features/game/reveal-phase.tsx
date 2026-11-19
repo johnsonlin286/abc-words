@@ -1,9 +1,10 @@
 "use client";
 
+import { Check } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import PenCircle from "@/components/pen-circle";
-import { buttonSecondary, errorText, notice } from "@/components/ui";
+import { errorText, notice } from "@/components/ui";
 import type { RevealInfo } from "@/shared/game";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
@@ -17,6 +18,7 @@ const STEP_MS = 250;
 /**
  * "Hurufnya sulit?": each player picks "Ganti huruf" or "Tetap". More than half of the active
  * players wanting a change replaces the letter; half or more keeping it starts answering at once.
+ * One line above the buttons counts both choices against what they need, so a "Tetap" tap visibly counts.
  */
 function LetterVote({ room, delayMs }: { room: GameRoomView; delayMs: number }) {
   const myId = useAuthStore((s) => s.user?.userId);
@@ -25,8 +27,11 @@ function LetterVote({ room, delayMs }: { room: GameRoomView; delayMs: number }) 
 
   // Same rule as the server: online players who aren't AFK.
   const active = room.members.filter((m) => m.isConnected && !isAfk(room.state, m.userId));
-  const votes = room.state.letterVotes.filter((id) => active.some((m) => m.userId === id)).length;
-  const needed = Math.floor(active.length / 2) + 1;
+  const isActive = (id: string) => active.some((m) => m.userId === id);
+  const changes = room.state.letterVotes.filter(isActive).length;
+  const keeps = room.state.letterKeeps.filter(isActive).length;
+  const changeNeeded = Math.floor(active.length / 2) + 1;
+  const keepNeeded = Math.ceil(active.length / 2);
   const mine =
     myId === undefined
       ? null
@@ -35,31 +40,75 @@ function LetterVote({ room, delayMs }: { room: GameRoomView; delayMs: number }) 
         : room.state.letterKeeps.includes(myId)
           ? "keep"
           : null;
-  const canVote = myId !== undefined && active.some((m) => m.userId === myId);
+  const canVote = myId !== undefined && isActive(myId);
+  const waiting = active.filter(
+    (m) => m.userId !== myId && !room.state.letterVotes.includes(m.userId) && !room.state.letterKeeps.includes(m.userId),
+  ).length;
   const choose = async (choice: "change" | "keep") => setError(await setLetterVote(mine === choice ? null : choice));
-  const option = (selected: boolean) => `${buttonSecondary} px-4 py-2 text-sm ${selected ? "bg-highlight-soft" : ""}`;
+
+  const options = [
+    { id: "change" as const, label: "Ganti huruf", count: changes, needed: changeNeeded },
+    { id: "keep" as const, label: "Tetap", count: keeps, needed: keepNeeded },
+  ];
 
   return (
-    <div className="ink-appear space-y-2" style={{ animationDelay: `${delayMs}ms` }}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium text-ink-soft" aria-live="polite">
-          Hurufnya sulit?{" "}
-          <span className="font-bold text-ink tabular-nums">
-            {votes} dari {needed}
-          </span>{" "}
-          suara untuk ganti huruf.
+    <div className="ink-appear space-y-3" style={{ animationDelay: `${delayMs}ms` }}>
+      <div>
+        <h3 className="text-xl font-bold">Hurufnya sulit?</h3>
+        <p className="mt-0.5 leading-snug text-ink-soft">
+          Pilih ganti huruf atau tetap. Hurufnya diganti kalau {changeNeeded} pemain memilih ganti.
         </p>
-        {canVote && (
-          <div role="group" aria-label="Pilihan huruf" className="flex gap-2">
-            <button type="button" aria-pressed={mine === "change"} onClick={() => choose("change")} className={option(mine === "change")}>
-              Ganti huruf
-            </button>
-            <button type="button" aria-pressed={mine === "keep"} onClick={() => choose("keep")} className={option(mine === "keep")}>
-              Tetap
-            </button>
-          </div>
-        )}
       </div>
+
+      <p className="font-semibold tabular-nums" aria-live="polite">
+        {options.map((o, i) => (
+          <span key={o.id}>
+            {i > 0 && <span className="px-2 text-ink-faint">·</span>}
+            {o.label}{" "}
+            <span className="rounded-sm bg-highlight-soft px-1 font-bold">
+              {o.count}/{o.needed}
+            </span>
+          </span>
+        ))}
+      </p>
+
+      <div role="group" aria-label="Pilihan huruf" className="grid grid-cols-2 gap-3">
+        {options.map((o) => {
+          const picked = mine === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              aria-pressed={picked}
+              disabled={!canVote}
+              onClick={() => choose(o.id)}
+              className={`relative flex items-center justify-center rounded-2xl border-2 border-ink px-3 py-3 text-ink shadow-[3px_3px_0_var(--color-ink)] transition-[transform,box-shadow,background-color] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_var(--color-ink)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen disabled:cursor-not-allowed disabled:opacity-60 ${
+                // The chosen option stays pressed in, so it reads as chosen without relying on colour.
+                picked
+                  ? "translate-x-[2px] translate-y-[2px] bg-highlight shadow-[1px_1px_0_var(--color-ink)]"
+                  : "bg-highlight-soft hover:bg-highlight"
+              }`}
+            >
+              {picked && (
+                <span
+                  aria-hidden
+                  className="absolute -top-2 -right-2 grid size-6 place-items-center rounded-full border-2 border-ink bg-white"
+                >
+                  <Check className="size-3.5" strokeWidth={3.5} />
+                </span>
+              )}
+              <span className="text-lg font-bold">{o.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <p role="status" className={mine === null ? "sr-only" : "font-semibold leading-snug"}>
+        {mine !== null &&
+          `Kamu memilih ${mine === "change" ? "ganti huruf" : "tetap"}. ${
+            waiting > 0 ? `Menunggu ${waiting} pemain lain… (masih bisa diubah)` : "Semua sudah memilih."
+          }`}
+      </p>
       {error && <p className={errorText}>{error}</p>}
     </div>
   );

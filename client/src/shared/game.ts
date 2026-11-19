@@ -41,7 +41,7 @@ export const MIN_REJECTIONS_TO_FAIL = 2;
 /** Phase lengths for the rules page; same as `DEFAULT_TIMING` in backend/src/modules/abc-words. */
 export const PICK_MS = 10_000;
 /** Longest the letter stays up for the "ganti huruf" vote; ends early once the vote is decided. */
-export const REVEAL_MS = 20_000;
+export const REVEAL_MS = 10_000;
 export const ANSWER_MS = 30_000;
 export const LAST_PLAYER_MS = 10_000;
 export const VOTING_MS = 20_000;

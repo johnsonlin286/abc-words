@@ -19,12 +19,17 @@ export function useTimeLeft(endsAt: number | null): number | null {
   return endsAt === null ? null : Math.max(endsAt - now, 0);
 }
 
+/** Every bar turns red-pen for this last stretch of its phase. */
+const URGENT_MS = 3_000;
+
 /**
  * Time left in the current phase. `endsAt` comes from the server's remaining time.
- * Drawn as a highlighter stroke in a pen outline; with `urgent` it turns red-pen to warn the player.
+ * Drawn as a highlighter stroke in a pen outline; it turns red-pen for the last `URGENT_MS`,
+ * or earlier when `urgent` is set.
  */
-export default function Countdown({ endsAt, totalMs, urgent = false }: { endsAt: number; totalMs: number; urgent?: boolean }) {
+export default function Countdown({ endsAt, totalMs, urgent: forced = false }: { endsAt: number; totalMs: number; urgent?: boolean }) {
   const left = useTimeLeft(endsAt) ?? 0;
+  const urgent = forced || left <= URGENT_MS;
 
   return (
     <div role="timer" className="flex items-center gap-3">

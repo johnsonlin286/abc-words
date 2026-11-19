@@ -62,11 +62,12 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
 - 3–8 players; the host can't start with fewer than 3 online. A running game ends when fewer than 3 remain (after a 30 s reconnect grace).
 - Up to 10 rounds; the host picks the category (Negara, Hewan, Kota, Buah & Sayur, or a custom "Lainnya") and round count.
 - Picking takes 10 s. Letter = `(sum − 1) % 26`; a letter already used skips to the next unused one.
-- The reveal lasts up to 20 s: each player picks "Ganti huruf" or "Tetap". More than half wanting a change swaps the letter for a random unused one (once per round); half or more keeping it starts answering at once.
+- The reveal lasts up to 10 s (20 s let players look answers up in another tab): each player picks "Ganti huruf" or "Tetap". More than half wanting a change swaps the letter for a random unused one (once per round); half or more keeping it starts answering at once.
 - Answering takes 30 s:
   - One answer each, in Indonesian, letters and spaces only, no duplicates within a game. Duplicates are compared ignoring spaces, and other names of the same country count as the same answer (`sameAnswerKey`, `same` map in `negara.json`; an alias shared by two countries, like "kongo", isn't mapped).
   - Paste is blocked, and answers within 1 s of the phase start are rejected.
   - The last player left gets a short final countdown.
+- Every countdown bar turns red-pen for its last 3 s.
 - Voting takes 20 s:
   - Answers found in the category's word list are **verified**: they pass without a vote and can't be rejected; voting is skipped when every answer is verified. Lists live in `backend/src/modules/abc-words/words/` and are built by `backend/scripts/word-lists/*.ts` (Negara from CLDR, Kota from GeoNames CC BY 4.0, Hewan from Wordnet Bahasa (MIT) + PWN noun.animal, filtered, plus a hand-written list, Buah & Sayur hand-written; sources credited on the rules page). Answers not in a list still go to the vote, never auto-fail. In Hewan and Buah & Sayur only base names are verified: "jambu biji" or "ikan emas" go to the vote because "jambu"/"ikan" are listed (`dropQualified`; reduplications like "kura kura" and different animals like "kuda nil" are kept). Negara and Kota keep their multi-word names (Korea Selatan, Padang Panjang are different places).
   - Rejecting needs a reason (off-category / misspelled / not-a-word), and votes are public.
@@ -89,7 +90,7 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
   - Classes `.paper` and `.note-card`.
 - Type: Fredoka (bold, dark) everywhere; Kalam handwriting only for "teacher's red-pen" notes.
 - Conventions:
-  - Red pen marks the round's letter: stamped and circled with `components/pen-circle.tsx`.
+  - Red pen marks the round's letter: stamped and circled with `components/pen-circle.tsx` when it is revealed; afterwards (answering, voting, result) it is a plain red letter, since a circle around I or J read as a symbol.
   - Used letters and failed answers are crossed out diagonally in red.
   - The highlighter marks what is selected, your own items and the winner.
   - Child-hand images 1–10 (`client/public/hands/`) replace tally marks.
