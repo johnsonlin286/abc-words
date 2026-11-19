@@ -96,7 +96,8 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
   - The highlighter marks what is selected, your own items and the winner.
   - Child-hand images 1–10 (`client/public/hands/`) replace tally marks.
   - Gold, silver and bronze trophy stickers (`client/src/assets/trophies/`) mark ranks 1–3.
-  - Empty seats read "Bangku kosong".
+  - Empty seats are one dashed cell, "+N bangku kosong" (listing every empty seat pushed the waiting room off a phone screen).
+  - Waiting room on phones: non-hosts see the rules as one summary line; chat is a floating speech-bubble button with an unread count that opens a bottom sheet (`chat-dock.tsx`, every phase); wider screens keep the inline chat card.
 - Motion: one orchestrated moment per screen, and everything is off under `prefers-reduced-motion`.
 - Keep one bold element per screen. Keep images light.
 

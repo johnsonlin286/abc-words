@@ -117,11 +117,12 @@ export default function PlayerSeats({ members, maxMembers, hostId, myId, ready }
             </li>
           );
         })}
-        {Array.from({ length: emptySeats }, (_, i) => (
-          <li key={i} className="rounded-xl border-2 border-dashed border-ink/25 px-3 py-2 text-sm font-medium text-ink-faint">
-            Bangku kosong
+        {/* One cell for all empty seats: listing up to six of them pushed everything below off a phone screen. */}
+        {emptySeats > 0 && (
+          <li className="grid place-items-center rounded-xl border-2 border-dashed border-ink/25 px-3 py-2 text-center text-sm font-medium text-ink-faint">
+            {emptySeats === 1 ? "1 bangku kosong" : `+${emptySeats} bangku kosong`}
           </li>
-        ))}
+        )}
       </ul>
       {error && <p className={`${errorText} mt-2`}>{error}</p>}
       <KickDialog member={kicking} onClose={() => setKicking(null)} />

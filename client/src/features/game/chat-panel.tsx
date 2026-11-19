@@ -21,35 +21,10 @@ const toggleClass =
 /** Heights the panel slides between; "closed" leaves only the header bar. */
 const SIZE_CLASS: Record<PanelSize, string> = { max: "h-80", small: "h-48", closed: "h-[2.875rem]" };
 
+/** Inline chat card for wider screens; phones get `ChatDock` instead. */
 export default function ChatPanel() {
-  const me = useAuthStore((s) => s.user);
-  const messages = useRoomStore((s) => s.messages);
-  const error = useRoomStore((s) => s.error);
-  const sendMessage = useRoomStore((s) => s.sendMessage);
-  const connection = useRoomStore((s) => s.connection);
-  const mutedMs = useTimeLeft(useRoomStore((s) => s.chatMutedUntil)) ?? 0;
-  const muted = mutedMs > 0;
-
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
-  const listRef = useRef<HTMLUListElement>(null);
   const [size, setSize] = useState<PanelSize>("max");
   const [reopened, setReopened] = useState(false);
-
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length, size]);
-
-  if (!me) return null;
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const value = text.trim();
-    if (!value || sending || muted) return;
-    setSending(true);
-    if (await sendMessage(value)) setText("");
-    setSending(false);
-  };
 
   // One button walks max -> small -> closed. Reopening lands on small, where it then grows back to max.
   const closed = size === "closed";
@@ -83,7 +58,43 @@ export default function ChatPanel() {
       </div>
 
       <div inert={closed} className="flex min-h-0 flex-1 flex-col">
+        <ChatBody active={!closed} />
+      </div>
+    </section>
+  );
+}
 
+/** The messages, status lines and the message form. `active` re-scrolls to the newest message when shown. */
+export function ChatBody({ active }: { active: boolean }) {
+  const me = useAuthStore((s) => s.user);
+  const messages = useRoomStore((s) => s.messages);
+  const error = useRoomStore((s) => s.error);
+  const sendMessage = useRoomStore((s) => s.sendMessage);
+  const connection = useRoomStore((s) => s.connection);
+  const mutedMs = useTimeLeft(useRoomStore((s) => s.chatMutedUntil)) ?? 0;
+  const muted = mutedMs > 0;
+
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages.length, active]);
+
+  if (!me) return null;
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = text.trim();
+    if (!value || sending || muted) return;
+    setSending(true);
+    if (await sendMessage(value)) setText("");
+    setSending(false);
+  };
+
+  return (
+    <>
       <ul ref={listRef} className="flex-1 space-y-2 overflow-y-auto p-4">
         {messages.map((m) =>
           m.userId === null ? (
@@ -136,7 +147,6 @@ export default function ChatPanel() {
           Kirim
         </button>
       </form>
-      </div>
-    </section>
+    </>
   );
 }

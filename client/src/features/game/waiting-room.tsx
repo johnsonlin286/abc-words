@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Check, Play } from "lucide-react";
 import { buttonPrimary, buttonSecondary, errorText, hint, notice } from "@/components/ui";
-import { MIN_PLAYERS, playersNotReady } from "@/shared/game";
+import { MIN_PLAYERS, categoryLabel, playersNotReady, type GameSettings } from "@/shared/game";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 import GameSettingsForm from "./game-settings-form";
 import PlayerSeats from "./player-seats";
@@ -15,17 +15,6 @@ export default function WaitingRoom({ room, myId }: { room: GameRoomView; myId: 
   const setReady = useRoomStore((s) => s.setReady);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // The action bar floats at the bottom of the screen until its own spot scrolls into view;
-  // a marker right after it tells whether it is floating, to draw it as a card only then.
-  const marker = useRef<HTMLDivElement>(null);
-  const [floating, setFloating] = useState(false);
-  useEffect(() => {
-    const el = marker.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => setFloating(!entry!.isIntersecting));
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   const enoughPlayers = room.members.filter((m) => m.isConnected).length >= MIN_PLAYERS;
   const categoryMissing = room.settings.category === "custom" && !room.settings.customCategory;
@@ -64,21 +53,13 @@ export default function WaitingRoom({ room, myId }: { room: GameRoomView; myId: 
           myId={myId}
           ready={room.state.ready}
         />
-        <GameSettingsForm settings={room.settings} isHost={isHost} />
+        {/* Only the host can change the rules, so the others just get them in one line. */}
+        {isHost ? <GameSettingsForm settings={room.settings} isHost /> : <RulesSummary settings={room.settings} />}
       </div>
 
       <hr className="border-t-2 border-dashed border-ink/20" />
 
-      {/*
-        Sticky: on a phone "Saya siap!" / "Mulai permainan" sit below the seats and the settings,
-        so the bar floats at the bottom of the screen until the player scrolls down to it.
-        Same padding in both states, so nothing jumps when it settles.
-      */}
-      <div
-        className={`sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-20 -mx-3 mb-0 flex flex-col gap-2 rounded-2xl border-2 px-3 py-3 transition-[background-color,border-color,box-shadow] sm:flex-row sm:items-center sm:gap-4 ${
-          floating ? "border-ink bg-white shadow-[3px_3px_0_var(--color-ink)]" : "border-transparent"
-        }`}
-      >
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
         {isHost && (
           <button
             type="button"
@@ -110,8 +91,25 @@ export default function WaitingRoom({ room, myId }: { room: GameRoomView; myId: 
         {status && <p className={hint}>{status}</p>}
         {error && <p className={errorText}>{error}</p>}
       </div>
-      {/* mb-0 above and mt-0 here: the marker sits right under the bar, adding no space. */}
-      <div ref={marker} aria-hidden className="mt-0 h-px" />
     </div>
+  );
+}
+
+/** The rules as one line for players who can't change them. */
+function RulesSummary({ settings }: { settings: GameSettings }) {
+  return (
+    <section aria-labelledby="rules-summary-heading">
+      <h2 id="rules-summary-heading" className="text-xl font-bold">
+        Aturan main
+      </h2>
+      <p className="mt-2 font-medium text-ink-soft">
+        Kategori{" "}
+        <span className="rounded-sm bg-highlight-soft px-1.5 font-bold break-words text-ink">
+          {categoryLabel(settings) || "belum ditulis"}
+        </span>{" "}
+        · <span className="font-bold text-ink tabular-nums">{settings.maxRounds}</span> ronde
+      </p>
+      <p className="mt-1 text-sm text-ink-faint">Diatur oleh host.</p>
+    </section>
   );
 }
