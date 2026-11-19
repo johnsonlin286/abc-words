@@ -30,6 +30,17 @@ export const ANSWER_MAX = 40;
 export const POINTS = { accepted: 1, rejected: -2, noAnswer: -1, loneRejection: -1 } as const;
 /** Same as `AFK_ROUNDS` in backend/src/modules/abc-words: rounds in a row without picking or answering. */
 export const AFK_ROUNDS = 2;
+/** Same as `PING_COOLDOWN_MS` in backend/src/modules/abc-words: the host can call a player once per this. */
+export const PING_COOLDOWN_MS = 10_000;
+
+/** Online players other than the host who haven't pressed "Siap"; the host can't start until it's empty. */
+export function playersNotReady(
+  members: { userId: string; name: string; isConnected: boolean }[],
+  hostId: string,
+  ready: string[],
+) {
+  return members.filter((m) => m.isConnected && m.userId !== hostId && !ready.includes(m.userId));
+}
 
 /** Lone rejections per game that only get a warning (yellow card); after that each costs points. */
 export const LONE_REJECTION_WARNINGS = 2;
@@ -142,6 +153,8 @@ export type GameState = ChatState & {
   idleRounds: Record<string, number>;
   /** Answer time per player in this game, accepted answers only; breaks score ties. */
   speed: Record<string, AnswerSpeed>;
+  /** Waiting room: players who pressed "Siap". The host counts as ready without pressing it. */
+  ready: string[];
 };
 
 export type AnswerSpeed = { totalMs: number; count: number };

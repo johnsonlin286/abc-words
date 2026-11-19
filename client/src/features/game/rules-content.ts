@@ -41,6 +41,7 @@ export const STEPS = [
     title: "Siapkan room",
     body: [
       `Butuh ${MIN_PLAYERS}–${LIMITS.maxMembers} pemain. Host memilih kategori dan jumlah ronde (maksimal ${MAX_ROUNDS}).`,
+      'Setiap pemain menekan "Saya siap!"; host baru bisa memulai setelah semua siap. Host bisa memanggil (🔔) pemain yang belum siap, atau mengeluarkannya dari room. Pemain yang dikeluarkan tetap boleh masuk lagi.',
     ],
   },
   {

@@ -60,6 +60,7 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
 ## Game rules (current)
 
 - 3–8 players; the host can't start with fewer than 3 online. A running game ends when fewer than 3 remain (after a 30 s reconnect grace).
+- Waiting room: every online player other than the host presses "Siap" before the host can start (the host counts as ready; readiness resets after each game). The host can ping a player who isn't ready (sound `client/public/sounds/ping.mp3` + vibration on Android, once per 10 s per player) and kick players, in the waiting room only (`onMemberLeave` rejects a kick mid-game); a kicked player may join again.
 - Up to 10 rounds; the host picks the category (Negara, Hewan, Kota, Buah & Sayur, or a custom "Lainnya") and round count.
 - Picking takes 10 s. Letter = `(sum − 1) % 26`; a letter already used skips to the next unused one.
 - The reveal lasts up to 10 s (20 s let players look answers up in another tab): each player picks "Ganti huruf" or "Tetap". More than half wanting a change swaps the letter for a random unused one (once per round); half or more keeping it starts answering at once.

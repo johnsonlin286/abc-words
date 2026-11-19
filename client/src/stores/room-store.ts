@@ -51,6 +51,8 @@ type RoomState = {
   error: string | null;
   /** Shown in the lobby after being kicked / the room closing. */
   notice: string | null;
+  /** The host's last call to this player (waiting room); `at` changes on every call. */
+  ping: { from: string; at: number } | null;
   /** Connect with a new name; resolves once the server accepted it. */
   signIn: (name: string) => Promise<void>;
   /** Bind socket listeners (once) and connect with the stored session. Safe to call repeatedly. */
@@ -71,6 +73,13 @@ type RoomState = {
   /** Vote to replace or keep this round's letter; `null` takes the vote back. */
   setLetterVote: (choice: "change" | "keep" | null) => Promise<string | null>;
   sendMessage: (text: string) => Promise<boolean>;
+  /** Waiting room: press (or take back) "Siap". */
+  setReady: (ready: boolean) => Promise<string | null>;
+  /** Host only: call a player who isn't ready (sound and vibration on their phone). */
+  pingPlayer: (userId: string) => Promise<string | null>;
+  /** Host only, waiting room only: remove a player. They may join again. */
+  kickPlayer: (userId: string) => Promise<string | null>;
+  clearPing: () => void;
   leaveRoom: () => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
@@ -152,8 +161,9 @@ export const useRoomStore = create<RoomState>((set, get) => {
     // Full snapshot of our room: the source of truth.
     s.on("room:state", (room) => showRoom(room as GameRoomView));
     s.on("room:event", ({ roomId, event, data }) => {
-      if (event !== "chat:message" || roomId !== get().room?.id) return;
-      set((st) => ({ messages: mergeMessage(st.messages, data as ChatMessage) }));
+      if (roomId !== get().room?.id) return;
+      if (event === "ping") set({ ping: { from: (data as { from: string }).from, at: Date.now() } });
+      if (event === "chat:message") set((st) => ({ messages: mergeMessage(st.messages, data as ChatMessage) }));
     });
     s.on("room:kicked", () => set({ ...NO_ROOM, notice: "Kamu dikeluarkan dari room oleh host." }));
     s.on("room:closed", ({ reason }) =>
@@ -216,6 +226,7 @@ export const useRoomStore = create<RoomState>((set, get) => {
     pending: false,
     error: null,
     notice: null,
+    ping: null,
 
     signIn: async (name) => {
       const s = socket();
@@ -286,6 +297,17 @@ export const useRoomStore = create<RoomState>((set, get) => {
 
     startGame: () => gameAction("start"),
     endGame: () => gameAction("end"),
+    setReady: (ready) => gameAction("ready", { ready }),
+    pingPlayer: (userId) => gameAction("ping", { userId }),
+    kickPlayer: async (userId) => {
+      try {
+        await request("room:kick", { userId });
+        return null;
+      } catch (e) {
+        return errorMessage(e);
+      }
+    },
+    clearPing: () => set({ ping: null }),
     pickNumber: (value) => gameAction("pick", { value }),
     setRejection: (answerUserId, reason) =>
       gameAction("reject", reason ? { answerUserId, rejected: true, reason } : { answerUserId, rejected: false }),

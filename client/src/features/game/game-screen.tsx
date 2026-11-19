@@ -8,6 +8,7 @@ import AnsweringPhase from "./answering-phase";
 import ChatPanel from "./chat-panel";
 import FinishedPhase from "./finished-phase";
 import PickingPhase from "./picking-phase";
+import PingAlert from "./ping-alert";
 import RevealPhase from "./reveal-phase";
 import ResultPhase from "./result-phase";
 import RoomBar from "./room-bar";
@@ -33,6 +34,7 @@ export default function GameScreen() {
   return (
     <div className="flex w-full flex-col gap-6">
       <RoomBar room={room} canEnd={playing && room.hostId === myId} />
+      <PingAlert isReady={phase !== "waiting" || room.state.ready.includes(myId)} />
       <AlphabetStrip used={crossedOut} />
       {playing && <ScoreStrip room={room} />}
 
