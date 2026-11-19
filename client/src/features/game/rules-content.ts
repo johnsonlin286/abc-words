@@ -66,7 +66,7 @@ export const STEPS = [
       `Tulis satu jawaban berawalan huruf itu, sesuai kategori, dalam ${seconds(ANSWER_MS)}.`,
       'Jawaban dalam bahasa Indonesia: tulis "Jepang", bukan "Japan"; "Kucing", bukan "Cat".',
       `Hanya huruf dan spasi, ${ANSWER_MIN}–${ANSWER_MAX} karakter. Angka ditulis dengan huruf ("300" jadi "tiga ratus") dan simbol dibuang.`,
-      "Tidak boleh sama dengan jawaban pemain lain, dan harus diketik sendiri (tidak bisa ditempel).",
+      'Tidak boleh sama dengan jawaban pemain lain, dan harus diketik sendiri (tidak bisa ditempel). Nama lain untuk negara yang sama ("Amerika" dan "Amerika Serikat") dan beda spasi ("Tanjung Balai" dan "Tanjungbalai") dihitung sama.',
       `Jangan menebak-nebak: ${ANSWER_RETRY_LIMIT} jawaban ditolak dalam ${seconds(ANSWER_RETRY_WINDOW_MS)} membuatmu harus menunggu ${seconds(ANSWER_RETRY_COOLDOWN_MS)}.`,
       `Kalau tinggal kamu yang belum menjawab, sisa waktumu ${seconds(LAST_PLAYER_MS)}.`,
       "Keduluan kata yang sama sesaat sebelum kamu? Waktumu ditambah untuk mencoba kata lain.",
@@ -76,7 +76,7 @@ export const STEPS = [
     title: "Voting",
     body: [
       `Selama ${seconds(VOTING_MS)}, tolak jawaban yang tidak sesuai dengan memilih alasannya: ${REJECT_REASONS.map((r) => r.label.toLowerCase()).join(", ")}. Semua pemain bisa melihat siapa menolak dan alasannya.`,
-      'Jawaban bertanda "Terverifikasi" ada di daftar kata kategori itu (Negara, Kota, Hewan, dan Buah & Sayur), jadi langsung lolos dan tidak bisa ditolak. Jawaban yang tidak ada di daftar tetap boleh, dinilai lewat voting.',
+      'Jawaban bertanda "Terverifikasi" ada di daftar kata kategori itu (Negara, Kota, Hewan, dan Buah & Sayur), jadi langsung lolos dan tidak bisa ditolak. Jawaban yang tidak ada di daftar tetap boleh, dinilai lewat voting. Untuk Hewan dan Buah & Sayur yang terverifikasi hanya nama dasarnya: "Jambu" dan "Ikan" terverifikasi, "Jambu Biji" dan "Ikan Emas" dinilai lewat voting.',
       `Jawaban gugur kalau lebih dari separuh pemain lain menolaknya, minimal ${MIN_REJECTIONS_TO_FAIL} orang. Satu orang tidak bisa menggugurkan jawaban sendirian.`,
       `Jatah tolak ${REJECTIONS} per permainan. Tolakan yang didukung pemain lain dan menggugurkan jawaban dikembalikan ke jatahmu.`,
       `Menolak sendirian jawaban yang ternyata tetap lolos dihitung per permainan. Kali ke-${LONE_REJECTION_WARNINGS} mendapat tanda peringatan ${LONE_REJECTION_WARNINGS}/${LONE_REJECTION_WARNINGS + 1} di papan skor. Mulai kali ke-${LONE_REJECTION_WARNINGS + 1} dianggap sengaja: ${formatPoints(POINTS.loneRejection)} poin setiap kali.`,

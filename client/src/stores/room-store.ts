@@ -31,8 +31,8 @@ function retryAfter(source: unknown): number | undefined {
 }
 
 const ANSWER_MESSAGES = {
-  duplicate: "Kata itu sudah dijawab pemain lain. Coba kata lain.",
-  "near-tie": "Keduluan! Kata itu baru saja masuk. Waktumu ditambah, coba kata lain.",
+  duplicate: "Kata itu (atau nama lainnya) sudah dijawab pemain lain. Coba kata lain.",
+  "near-tie": "Keduluan! Kata itu (atau nama lainnya) baru saja masuk. Waktumu ditambah, coba kata lain.",
 };
 
 type RoomState = {
