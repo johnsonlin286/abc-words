@@ -67,6 +67,7 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
 - Answering takes the room's answering time (default 30 s):
   - One answer each, in Indonesian (KBBI loanwords count, even when spelled like English: editor, senator; unabsorbed English like "chef" does not), letters and spaces only, no duplicates within a game. Duplicates are compared ignoring spaces, and other names of the same thing count as the same answer (`sameAnswerKey`, `same` maps in `negara.json` and `makanan-minuman.json`; an alias shared by two countries, like "kongo", isn't mapped).
   - Paste is blocked, and answers within 1 s of the phase start are rejected.
+  - Answers with swear words are rejected (`INAPPROPRIATE_ANSWER`, counts toward the retry pause) using the base `indonesian-badwords` dictionary + English, so "Anjing"/"Babi" still work; verified answers are never checked. Chat and nicknames use the strict expanded dictionary (`createProfanityChecker({ strict })` in `backend/src/modules/chat/profanity.ts`); nicknames are also checked with digits/`_`/`-` turned into spaces (`INAPPROPRIATE_NAME`). The dictionaries only match whole words, so every checker also strips common suffixes (-nya, -mu, -ku, -lah, -kah, -pun) and flags words that start with a base-dictionary swear word of 5+ letters ("kontolx"); a test keeps every category word list (except Kota, all verified) free of hits.
   - The last player left gets a short final countdown.
 - Every countdown bar turns red-pen for its last 3 s.
 - Voting takes 20 s:
@@ -106,4 +107,3 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
 - Sound effects, with a mute toggle and played only after a user gesture. Proposed set: pick tick, last-3-seconds tick, letter stamp and pen circle, answer sent, rejection scribble, Lolos ding, winner fanfare. Sources must be CC0 or Pixabay Content License. The owner hasn't chosen the sounds yet.
 - UI language switch ID/EN (later).
 - Production `SITE_URL` once a domain exists.
-- Research a profanity filter for answers (its own task).

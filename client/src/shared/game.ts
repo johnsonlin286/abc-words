@@ -251,6 +251,7 @@ export function validateAnswer(text: string, letter: string): string | null {
 // connect_error codes from backend/src/project/player-names.ts
 export const INVALID_NAME = "INVALID_NAME";
 export const NAME_TAKEN = "NAME_TAKEN";
+export const INAPPROPRIATE_NAME = "INAPPROPRIATE_NAME";
 export const UNAUTHORIZED = "UNAUTHORIZED";
 
 // ---------- user name validation (same rule as backend/src/project/player-names.ts) ----------

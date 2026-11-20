@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { RequestError, getGameSocket, request, type GameSocket } from "@/lib/game-socket";
 import type { RoomView } from "@/shared/contract";
 import {
+  INAPPROPRIATE_NAME,
   INVALID_NAME,
   LIMITS,
   NAME_TAKEN,
@@ -88,6 +89,7 @@ type RoomState = {
 const NAME_ERRORS: Record<string, string> = {
   [NAME_TAKEN]: "Nama sudah digunakan pemain lain. Pilih nama lain.",
   [INVALID_NAME]: "Nama tidak valid. Gunakan huruf, angka, _ atau -.",
+  [INAPPROPRIATE_NAME]: "Nama mengandung kata kasar. Pilih nama lain.",
 };
 
 function errorMessage(e: unknown): string {
