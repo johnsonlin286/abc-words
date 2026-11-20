@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { buttonPrimary, input } from "@/components/ui";
-import { ANSWER_MAX, validateAnswer } from "@/shared/game";
+import { ANSWER_MAX, categoryLabel, validateAnswer } from "@/shared/game";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 import AnswerBoard from "./answer-board";
@@ -100,7 +100,17 @@ export default function AnsweringPhase({ room, letter }: { room: GameRoomView; l
           Jawabanmu: <span className="text-lg font-bold break-words">{mine.text}</span>. Menunggu pemain lain.
         </p>
       ) : (
-        <AnswerForm letter={letter} />
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-lg font-bold">Tulis jawabanmu!</h3>
+            <p className="mt-1 leading-snug text-ink-soft">
+              Satu jawaban berawalan <span className="font-bold text-redpen">{letter}</span> dari kategori{" "}
+              <span className="font-bold text-ink">{categoryLabel(room.settings)}</span>. Kata yang sudah dipakai pemain
+              lain tidak boleh, jadi cepat!
+            </p>
+          </div>
+          <AnswerForm letter={letter} />
+        </div>
       )}
 
       <AnswerBoard room={room} />
