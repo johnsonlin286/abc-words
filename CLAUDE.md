@@ -45,7 +45,8 @@ The end goal is an Android app in React Native, in `mobile-app/`, built in stage
   - Tokens are in `mobile-app/tailwind.config.js` and `src/theme/tokens.ts`, the same values as `globals.css`. Android needs one font family per weight, so use `font-sans-regular` / `font-sans` (500) / `font-sans-semibold` / `font-sans-bold` / `font-hand`, not `font-bold`.
   - `darkMode: "class"` in the Tailwind config is required: with the default "media", NativeWind throws on web.
   - Card shadows use the RN `boxShadow` style (`components/note-card.tsx`).
-  - `.claude/launch.json` has `expo-web` (port 8090) for quick screenshots in the browser pane; the real check is on an Android device.
+  - Develop in **Expo Go** first (the owner's usual flow): `.claude/launch.json` `expo-go` starts Metro on 8081 and opens the app on the running emulator (`Small_Phone_API_34`, 360×640 dp, so check that screens fit it). Screenshot with `adb exec-out screencap -p`. `expo-web` (port 8090) is only for quick looks in the browser pane. Don't set `CI=1` on these servers: it turns off Metro's file watching.
+  - A development build (`expo-dev-client` is installed, provisional package `com.johnsonlin.abclimadasar`) is needed once a native module that Expo Go lacks arrives (Google Sign-In, AdMob, Play Billing). Gradle then needs a JDK 17 toolchain; Android Studio only bundles JDK 21, and `brew install openjdk@17` compiles Python from source on this Intel Mac (slow), so prefer a prebuilt JDK 17 or EAS Build.
 
 ## Commands
 
