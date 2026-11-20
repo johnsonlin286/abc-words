@@ -30,6 +30,7 @@ const seconds = (ms: number) => `${ms / 1000} detik`;
 export const SCORE_ROWS = [
   { label: "Jawaban lolos", points: POINTS.accepted },
   { label: "Jawaban gugur", points: POINTS.rejected },
+  { label: "Jawaban gugur saat main berdua", points: POINTS.rejectedByOne },
   { label: "Tidak menjawab", points: POINTS.noAnswer },
   {
     label: `Menolak sendirian jawaban yang tetap lolos, mulai kali ke-${LONE_REJECTION_WARNINGS + 1}`,
@@ -81,6 +82,7 @@ export const STEPS = [
       `Selama ${seconds(VOTING_MS)}, tolak jawaban yang tidak sesuai dengan memilih alasannya: ${REJECT_REASONS.map((r) => r.label.toLowerCase()).join(", ")}. Semua pemain bisa melihat siapa menolak dan alasannya.`,
       'Jawaban bertanda "Terverifikasi" ada di daftar kata kategori itu (Negara, Kota, Hewan, Buah & Sayur, Profesi, dan Makanan & Minuman), jadi langsung lolos dan tidak bisa ditolak. Jawaban yang tidak ada di daftar tetap boleh, dinilai lewat voting. Untuk Hewan, Buah & Sayur, Profesi, dan Makanan & Minuman yang terverifikasi hanya nama dasarnya: "Jambu" dan "Dokter" terverifikasi, "Jambu Biji" dan "Dokter Gigi" dinilai lewat voting.',
       `Jawaban gugur kalau lebih dari separuh pemain lain menolaknya, minimal ${MIN_REJECTIONS_TO_FAIL} orang. Satu orang tidak bisa menggugurkan jawaban sendirian.`,
+      `Main berdua (atau tinggal berdua yang online): lawanmu satu-satunya penilai, jadi tolakannya langsung menggugurkan jawaban. Supaya adil, jawaban itu ${formatPoints(POINTS.rejectedByOne)} poin, tidak dikurangi, dan jatah tolak tidak dikembalikan: paling banyak ${REJECTIONS} jawaban yang bisa dijegal per permainan.`,
       `Jatah tolak ${REJECTIONS} per permainan. Tolakan yang didukung pemain lain dan menggugurkan jawaban dikembalikan ke jatahmu.`,
       `Menolak sendirian jawaban yang ternyata tetap lolos dihitung per permainan. Kali ke-${LONE_REJECTION_WARNINGS} mendapat tanda peringatan ${LONE_REJECTION_WARNINGS}/${LONE_REJECTION_WARNINGS + 1} di papan skor. Mulai kali ke-${LONE_REJECTION_WARNINGS + 1} dianggap sengaja: ${formatPoints(POINTS.loneRejection)} poin setiap kali.`,
       'Tekan "Selesai menilai" kalau sudah. Begitu semua selesai, hasil langsung keluar.',

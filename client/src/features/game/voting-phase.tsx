@@ -43,6 +43,8 @@ export default function VotingPhase({ room, letter }: { room: GameRoomView; lett
   const iAmDone = myId !== undefined && votingDone.includes(myId);
   const doneCount = judges.filter((m) => votingDone.includes(m.userId)).length;
   const myLoneRejections = (myId && room.state.loneRejections[myId]) || 0;
+  // Same rule as the server: with two players online, each answer has one judge.
+  const oneJudge = room.members.filter((m) => m.isConnected).length === 2;
 
   const send = async (answerUserId: string, reason: RejectReason | null) => {
     setChoosingFor(null);
@@ -57,9 +59,18 @@ export default function VotingPhase({ room, letter }: { room: GameRoomView; lett
       <div>
         <h3 className="text-lg font-bold">Ada jawaban yang tidak sesuai? Coret!</h3>
         <p className="mt-1 text-sm leading-relaxed font-medium text-ink-soft">
-          Jawaban yang gugur {formatPoints(POINTS.rejected)} poin.{" "}
-          Tolakan yang disetujui pemain lain dikembalikan ke jatahmu. Menolak sendirian jawaban yang tetap lolos, mulai
-          kali ke-{LONE_REJECTION_WARNINGS + 1}: {formatPoints(POINTS.loneRejection)} poin.{" "}
+          {oneJudge ? (
+            <>
+              Kalian main berdua: jawaban yang kamu tolak langsung gugur, tapi tanpa pengurangan poin. Jatah tolak
+              tidak dikembalikan.{" "}
+            </>
+          ) : (
+            <>
+              Jawaban yang gugur {formatPoints(POINTS.rejected)} poin. Tolakan yang disetujui pemain lain dikembalikan
+              ke jatahmu. Menolak sendirian jawaban yang tetap lolos, mulai kali ke-{LONE_REJECTION_WARNINGS + 1}:{" "}
+              {formatPoints(POINTS.loneRejection)} poin.{" "}
+            </>
+          )}
           Sisa jatah tolakmu: <span className="rounded-sm bg-highlight px-1 font-bold text-ink tabular-nums">{rejectionsLeft}</span>.
         </p>
         {anyVerified && (

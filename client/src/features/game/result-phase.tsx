@@ -82,7 +82,7 @@ export default function ResultPhase({ room, letter }: { room: GameRoomView; lett
                     {a.accepted ? "Lolos" : "Gugur"}
                   </span>
                   <Points
-                    rule={a.accepted ? POINTS.accepted : POINTS.rejected}
+                    rule={a.accepted ? POINTS.accepted : a.judgedByOne ? POINTS.rejectedByOne : POINTS.rejected}
                     actual={a.points ?? 0}
                     className={a.accepted ? "text-success" : "text-redpen"}
                   />

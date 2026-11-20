@@ -59,7 +59,7 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
 
 ## Game rules (current)
 
-- 3–8 players; the host can't start with fewer than 3 online. A running game ends when fewer than 3 remain (after a 30 s reconnect grace).
+- 2–8 players; the host can't start with fewer than 2 online. A running game ends when fewer than 2 remain (after a 30 s reconnect grace).
 - Waiting room: every online player other than the host presses "Siap" before the host can start (the host counts as ready; readiness resets after each game). The host can ping a player who isn't ready (sound `client/public/sounds/ping.mp3`, from Pixabay under the Pixabay Content License: free to use, no attribution; + vibration on Android, once per 10 s per player) and kick players, in the waiting room only (`onMemberLeave` rejects a kick mid-game); a kicked player may join again.
 - Up to 10 rounds; the host picks the category (Negara, Hewan, Kota, Buah & Sayur, Profesi, Makanan & Minuman, or a custom "Lainnya"), round count, and answering time (slider: 20, 25, 30, 35 or 40 s; default 30; `answerSeconds`, validated by the server).
 - Picking takes 10 s. Letter = `(sum − 1) % 26`; a letter already used skips to the next unused one.
@@ -73,10 +73,11 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
 - Voting takes 20 s:
   - Answers found in the category's word list are **verified**: they pass without a vote and can't be rejected; voting is skipped when every answer is verified. Lists live in `backend/src/modules/abc-words/words/` and are built by `backend/scripts/word-lists/*.ts` (Negara from CLDR, Kota from GeoNames CC BY 4.0, Hewan from Wordnet Bahasa (MIT) + PWN noun.animal, filtered, plus a hand-written list, Buah & Sayur hand-written, Profesi hand-written and single-word only by the owner's rule ("Dokter" yes, "Dokter Gigi" goes to the vote; juru/kepala/ahli/pemandu/penjaga/pegawai/anggota + X are left out, single-word synonyms like koki, nutrisionis, pramuwisata are in; only pemadam kebakaran, ibu rumah tangga and wali kota are two words; Makanan & Minuman hand-written, single words or reduplications only plus seven approved two-word names (es krim, es teh, es campur, air putih, ayam goreng, pisang goreng, bika ambon), no fruit/vegetables (own category) or alcohol, with a `same` map for spellings of one dish like mi/mie); sources credited on the rules page). Answers not in a list still go to the vote, never auto-fail. In Hewan and Buah & Sayur only base names are verified: "jambu biji" or "ikan emas" go to the vote because "jambu"/"ikan" are listed (`dropQualified`; reduplications like "kura kura" and different animals like "kuda nil" are kept). Negara and Kota keep their multi-word names (Korea Selatan, Padang Panjang are different places).
   - Rejecting needs a reason (off-category / misspelled / not-a-word), and votes are public.
-  - An answer fails only with **at least 2 rejections and more than half of the other online players**. One player can never fail an answer alone; that is why the minimum is 3.
+  - An answer fails only with **at least 2 rejections and more than half of the other online players**. With 3+ online, one player can never fail an answer alone.
+  - Two online (a 2-player game, or only two still connected): the other player is the only judge (`judgedByOne`). One rejection fails an unverified answer, but for 0 points (`POINTS.rejectedByOne`) instead of −1, the rejection is not refunded (so at most 3 answers per game can be blocked), and the lone-rejection rule doesn't apply. Verified answers still pass, and "Lainnya" stays playable.
   - Each player has 3 rejections per game, refunded when the answer fails with support.
 - Ranking: score, then the faster average answer time (accepted answers only, ms from the start of answering, measured by the server). Equal on both shares the rank.
-- Points: accepted +1, failed −1 (was −2; a failed answer is often just a typo), no answer −1. Rejecting alone an answer that still passes is free the 1st time, a ⚠ 2/3 warning the 2nd, and −1 from the 3rd on. Scores never go below 0.
+- Points: accepted +1, failed −1 (was −2; a failed answer is often just a typo; 0 when only one player judged it), no answer −1. Rejecting alone an answer that still passes is free the 1st time, a ⚠ 2/3 warning the 2nd, and −1 from the 3rd on. Scores never go below 0.
 - Anti-abuse:
   - Answer spam: 3 rejected tries in 5 s pauses answering for 3 s.
   - Chat spam: mute.

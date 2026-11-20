@@ -19,15 +19,15 @@ export function isRoomCode(code: string): boolean {
 /** Room type = backend module that handles the room (backend/src/modules/abc-words). */
 export const ROOM_TYPE = "abc-words";
 
-/** Same as backend: with 2 players the only judge could fail the other answer on purpose. */
-export const MIN_PLAYERS = 3;
+/** Same as backend. With 2 players the other player alone judges unverified answers (see `POINTS.rejectedByOne`). */
+export const MIN_PLAYERS = 2;
 export const MAX_ROUNDS = 10;
 export const CUSTOM_CATEGORY_MAX = 40;
 export const ANSWER_MIN = 2;
 export const ANSWER_MAX = 40;
 
 /** Same values as `POINTS` in backend/src/modules/abc-words. Scores never go below 0. */
-export const POINTS = { accepted: 1, rejected: -1, noAnswer: -1, loneRejection: -1 } as const;
+export const POINTS = { accepted: 1, rejected: -1, rejectedByOne: 0, noAnswer: -1, loneRejection: -1 } as const;
 /** Same as `AFK_ROUNDS` in backend/src/modules/abc-words: rounds in a row without picking or answering. */
 export const AFK_ROUNDS = 2;
 /** Same as `PING_COOLDOWN_MS` in backend/src/modules/abc-words: the host can call a player once per this. */
@@ -137,6 +137,8 @@ export type GameState = ChatState & {
     rejectedBy: { userId: string; name: string; reason: RejectReason }[];
     /** Voting result; null until voting ends. */
     accepted: boolean | null;
+    /** Judged by only one other player (two online): a rejection fails it for `POINTS.rejectedByOne`. */
+    judgedByOne: boolean;
     /** Score change: +1 accepted, -1 rejected (0 when the score was already 0). Null until voting ends. */
     points: number | null;
   }[];
