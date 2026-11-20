@@ -19,14 +19,28 @@ just a nickname per browser tab.
 ```
 abc-words/            this repo (github.com/johnsonlin286/abc-words), branch develop
 ├── client/           Next.js app (tracked here)
-└── backend/          separate clone of github.com/johnsonlin286/NESIO, branch feature/abc-words
-                      (ignored by this repo's .gitignore; commit and push it on its own)
+├── backend/          separate clone of github.com/johnsonlin286/NESIO, branch feature/abc-words
+│                     (ignored by this repo's .gitignore; commit and push it on its own)
+└── mobile-app/       separate clone of github.com/johnsonlin286/abc-words-app (React Native, empty so far;
+                      ignored by this repo's .gitignore; commit and push it on its own)
 ```
+
+- Start Claude sessions in this root folder, not inside `mobile-app/` or `backend/`: the auto-memory belongs to this folder, and work often touches several of the three repos.
 
 - Clone the backend into `backend/` and check out `feature/abc-words` to run the game locally.
 - `client/src/shared/contract.ts` is a verbatim copy of `backend/src/shared/contract.ts`. Re-copy it whenever the contract changes.
 - Game rules live in `backend/src/modules/abc-words/index.ts` (tests in `backend/test/abc-words.test.ts`). The client mirrors the constants it shows in `client/src/shared/game.ts` (MIN_PLAYERS, POINTS, REJECTIONS, timings, reject reasons). Change both sides together.
 - Client game UI is in `client/src/features/game/`, one component per phase. Shared building blocks are in `client/src/components/`, with class strings in `components/ui.ts`.
+
+## Mobile app (planned)
+
+The end goal is an Android app in React Native, in `mobile-app/`. Nothing is built yet; decisions so far:
+
+- Same backend, unchanged: the app is another client of the NESIO Socket.IO + REST API. Copy `contract.ts` and the rule constants of `client/src/shared/game.ts` verbatim, as the web client does, and change all sides together.
+- Reuse the web client's logic (Zustand stores, socket handling, TanStack Query); rewrite the UI natively in the same "buku tulis" design system (tokens, Fredoka + Kalam, hand images, trophy stickers).
+- Once the app exists, the web becomes join-only: it opens an invite link and plays that room, but can't create rooms or list public rooms. Creating a room happens in the app. Invite links should open the app when it is installed (Android App Links, `assetlinks.json` on the production domain) and the web otherwise.
+- Android first; Play Store release. Check in Play Console whether the closed-test rule (12 testers for 14 days) applies to the owner's account before planning the release.
+- Before starting, agree the stack with the owner (e.g. Expo, NativeWind, Reanimated, react-native-svg), two options and a recommendation as usual.
 
 ## Commands
 

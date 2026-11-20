@@ -1,4 +1,6 @@
 # backend/ is its own git repo (NESIO), cloned separately
 /backend/
+# mobile-app/ is its own git repo (React Native app), cloned separately
+/mobile-app/
 
 .DS_Store
