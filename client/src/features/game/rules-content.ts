@@ -78,7 +78,7 @@ export const STEPS = [
     title: "Voting",
     body: [
       `Selama ${seconds(VOTING_MS)}, tolak jawaban yang tidak sesuai dengan memilih alasannya: ${REJECT_REASONS.map((r) => r.label.toLowerCase()).join(", ")}. Semua pemain bisa melihat siapa menolak dan alasannya.`,
-      'Jawaban bertanda "Terverifikasi" ada di daftar kata kategori itu (Negara, Kota, Hewan, dan Buah & Sayur), jadi langsung lolos dan tidak bisa ditolak. Jawaban yang tidak ada di daftar tetap boleh, dinilai lewat voting. Untuk Hewan dan Buah & Sayur yang terverifikasi hanya nama dasarnya: "Jambu" dan "Ikan" terverifikasi, "Jambu Biji" dan "Ikan Emas" dinilai lewat voting.',
+      'Jawaban bertanda "Terverifikasi" ada di daftar kata kategori itu (Negara, Kota, Hewan, Buah & Sayur, dan Profesi), jadi langsung lolos dan tidak bisa ditolak. Jawaban yang tidak ada di daftar tetap boleh, dinilai lewat voting. Untuk Hewan, Buah & Sayur, dan Profesi yang terverifikasi hanya nama dasarnya: "Jambu" dan "Dokter" terverifikasi, "Jambu Biji" dan "Dokter Gigi" dinilai lewat voting.',
       `Jawaban gugur kalau lebih dari separuh pemain lain menolaknya, minimal ${MIN_REJECTIONS_TO_FAIL} orang. Satu orang tidak bisa menggugurkan jawaban sendirian.`,
       `Jatah tolak ${REJECTIONS} per permainan. Tolakan yang didukung pemain lain dan menggugurkan jawaban dikembalikan ke jatahmu.`,
       `Menolak sendirian jawaban yang ternyata tetap lolos dihitung per permainan. Kali ke-${LONE_REJECTION_WARNINGS} mendapat tanda peringatan ${LONE_REJECTION_WARNINGS}/${LONE_REJECTION_WARNINGS + 1} di papan skor. Mulai kali ke-${LONE_REJECTION_WARNINGS + 1} dianggap sengaja: ${formatPoints(POINTS.loneRejection)} poin setiap kali.`,
