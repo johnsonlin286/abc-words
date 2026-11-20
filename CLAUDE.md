@@ -32,15 +32,20 @@ abc-words/            this repo (github.com/johnsonlin286/abc-words), branch dev
 - Game rules live in `backend/src/modules/abc-words/index.ts` (tests in `backend/test/abc-words.test.ts`). The client mirrors the constants it shows in `client/src/shared/game.ts` (MIN_PLAYERS, POINTS, REJECTIONS, timings, reject reasons). Change both sides together.
 - Client game UI is in `client/src/features/game/`, one component per phase. Shared building blocks are in `client/src/components/`, with class strings in `components/ui.ts`.
 
-## Mobile app (planned)
+## Mobile app (in progress)
 
-The end goal is an Android app in React Native, in `mobile-app/`. Nothing is built yet; decisions so far:
+The end goal is an Android app in React Native, in `mobile-app/`, built in stages (the owner's request). Stage 1 (project setup and packages) is done; no game screens yet. Decisions so far:
 
 - Same backend, unchanged: the app is another client of the NESIO Socket.IO + REST API. Copy `contract.ts` and the rule constants of `client/src/shared/game.ts` verbatim, as the web client does, and change all sides together.
 - Reuse the web client's logic (Zustand stores, socket handling, TanStack Query); rewrite the UI natively in the same "buku tulis" design system (tokens, Fredoka + Kalam, hand images, trophy stickers).
 - Once the app exists, the web becomes join-only: it opens an invite link and plays that room, but can't create rooms or list public rooms. Creating a room happens in the app. Invite links should open the app when it is installed (Android App Links, `assetlinks.json` on the production domain) and the web otherwise.
 - Android first; Play Store release. Check in Play Console whether the closed-test rule (12 testers for 14 days) applies to the owner's account before planning the release.
-- Before starting, agree the stack with the owner (e.g. Expo, NativeWind, Reanimated, react-native-svg), two options and a recommendation as usual.
+- Stack (agreed 2026-11-20): Expo SDK 58 with Expo Router (`src/app/`), NativeWind 4.2.7 (Tailwind v3 syntax; v5 was still a pre-release and untested on SDK 58), Reanimated 4, react-native-svg, Zustand, TanStack Query, socket.io-client, AsyncStorage (replaces `sessionStorage`), expo-clipboard, expo-audio, expo-haptics, lucide-react-native, Fredoka + Kalam via `@expo-google-fonts`. Builds and Play Store upload with EAS.
+  - Read `mobile-app/AGENTS.md` first: Expo changes every SDK, so check the versioned docs; add packages with `npx expo install`.
+  - Tokens are in `mobile-app/tailwind.config.js` and `src/theme/tokens.ts`, the same values as `globals.css`. Android needs one font family per weight, so use `font-sans-regular` / `font-sans` (500) / `font-sans-semibold` / `font-sans-bold` / `font-hand`, not `font-bold`.
+  - `darkMode: "class"` in the Tailwind config is required: with the default "media", NativeWind throws on web.
+  - Card shadows use the RN `boxShadow` style (`components/note-card.tsx`).
+  - `.claude/launch.json` has `expo-web` (port 8090) for quick screenshots in the browser pane; the real check is on an Android device.
 
 ## Commands
 

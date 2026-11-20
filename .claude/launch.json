@@ -38,6 +38,16 @@
       ],
       "port": 3101,
       "autoPort": false
+    },
+    {
+      "name": "expo-web",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd mobile-app && PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$PATH\" CI=1 npx expo start --web --port 8090"
+      ],
+      "port": 8090,
+      "autoPort": false
     }
   ]
 }
