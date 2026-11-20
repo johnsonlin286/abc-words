@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  ANSWER_SECONDS_OPTIONS,
   CATEGORIES,
   CUSTOM_CATEGORY_MAX,
   MAX_ROUNDS,
@@ -117,8 +118,47 @@ export default function GameSettingsForm({ settings, isHost }: { settings: GameS
           </fieldset>
         </div>
 
+        <AnswerTime value={settings.answerSeconds} onChange={(answerSeconds) => save({ answerSeconds })} />
+
         {error && <p className={errorText}>{error}</p>}
       </div>
     </section>
   );
 }
+
+/** Answering time as a five-step slider (20–40 s), saved on every step. */
+function AnswerTime({ value, onChange }: { value: number; onChange: (seconds: number) => void }) {
+  const options = ANSWER_SECONDS_OPTIONS;
+  const index = Math.max(options.indexOf(value as (typeof options)[number]), 0);
+  return (
+    <div>
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <label htmlFor="answer-seconds" className="text-sm font-semibold">
+          Waktu menjawab
+        </label>
+        <output htmlFor="answer-seconds" className="text-lg font-bold tabular-nums">
+          {value} detik
+        </output>
+      </div>
+      <input
+        id="answer-seconds"
+        type="range"
+        min={0}
+        max={options.length - 1}
+        step={1}
+        value={index}
+        aria-valuetext={`${value} detik`}
+        onChange={(e) => onChange(options[Number(e.target.value)]!)}
+        className="w-full cursor-pointer accent-[var(--color-ink)]"
+      />
+      <div aria-hidden className="mt-1 flex justify-between text-xs font-semibold text-ink-soft tabular-nums">
+        {options.map((s) => (
+          <span key={s} className={s === value ? "text-ink" : ""}>
+            {s}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+

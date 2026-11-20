@@ -27,7 +27,7 @@ export const ANSWER_MIN = 2;
 export const ANSWER_MAX = 40;
 
 /** Same values as `POINTS` in backend/src/modules/abc-words. Scores never go below 0. */
-export const POINTS = { accepted: 1, rejected: -2, noAnswer: -1, loneRejection: -1 } as const;
+export const POINTS = { accepted: 1, rejected: -1, noAnswer: -1, loneRejection: -1 } as const;
 /** Same as `AFK_ROUNDS` in backend/src/modules/abc-words: rounds in a row without picking or answering. */
 export const AFK_ROUNDS = 2;
 /** Same as `PING_COOLDOWN_MS` in backend/src/modules/abc-words: the host can call a player once per this. */
@@ -54,6 +54,8 @@ export const PICK_MS = 10_000;
 /** Longest the letter stays up for the "ganti huruf" vote; ends early once the vote is decided. */
 export const REVEAL_MS = 10_000;
 export const ANSWER_MS = 30_000;
+/** Same as `ANSWER_SECONDS_OPTIONS` in backend/src/modules/abc-words: answer time the host can pick (default 30). */
+export const ANSWER_SECONDS_OPTIONS = [20, 25, 30, 35, 40] as const;
 export const LAST_PLAYER_MS = 10_000;
 export const VOTING_MS = 20_000;
 /** Same as `ANSWER_RETRY_LIMIT`, `retryWindowMs` and `retryCooldownMs` in backend/src/modules/abc-words. */
@@ -93,6 +95,8 @@ export type GameSettings = {
   category: (typeof CATEGORIES)[number]["id"];
   customCategory: string;
   maxRounds: number;
+  /** Answering time in seconds, one of `ANSWER_SECONDS_OPTIONS`. */
+  answerSeconds: number;
 };
 
 /** Mirrors `ChatMessage` / `ChatState` in backend/src/modules/chat. `userId: null` = system message. */

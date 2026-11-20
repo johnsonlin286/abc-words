@@ -5,6 +5,7 @@ import {
   ANSWER_MAX,
   ANSWER_MIN,
   ANSWER_MS,
+  ANSWER_SECONDS_OPTIONS,
   ANSWER_RETRY_COOLDOWN_MS,
   ANSWER_RETRY_LIMIT,
   ANSWER_RETRY_WINDOW_MS,
@@ -64,7 +65,7 @@ export const STEPS = [
   {
     title: "Menjawab",
     body: [
-      `Tulis satu jawaban berawalan huruf itu, sesuai kategori, dalam ${seconds(ANSWER_MS)}.`,
+      `Tulis satu jawaban berawalan huruf itu, sesuai kategori, dalam ${seconds(ANSWER_MS)} (host bisa mengaturnya antara ${ANSWER_SECONDS_OPTIONS[0]} dan ${ANSWER_SECONDS_OPTIONS.at(-1)} detik).`,
       'Jawaban dalam bahasa Indonesia: tulis "Jepang", bukan "Japan"; "Kucing", bukan "Cat".',
       `Hanya huruf dan spasi, ${ANSWER_MIN}–${ANSWER_MAX} karakter. Angka ditulis dengan huruf ("300" jadi "tiga ratus") dan simbol dibuang.`,
       'Tidak boleh sama dengan jawaban pemain lain, dan harus diketik sendiri (tidak bisa ditempel). Nama lain untuk negara yang sama ("Amerika" dan "Amerika Serikat") dan beda spasi ("Tanjung Balai" dan "Tanjungbalai") dihitung sama.',

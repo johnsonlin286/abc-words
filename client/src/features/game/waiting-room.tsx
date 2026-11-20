@@ -107,7 +107,8 @@ function RulesSummary({ settings }: { settings: GameSettings }) {
         <span className="rounded-sm bg-highlight-soft px-1.5 font-bold break-words text-ink">
           {categoryLabel(settings) || "belum ditulis"}
         </span>{" "}
-        · <span className="font-bold text-ink tabular-nums">{settings.maxRounds}</span> ronde
+        · <span className="font-bold text-ink tabular-nums">{settings.maxRounds}</span> ronde ·{" "}
+        <span className="font-bold text-ink tabular-nums">{settings.answerSeconds}</span> detik
       </p>
       <p className="mt-1 text-sm text-ink-faint">Diatur oleh host.</p>
     </section>
