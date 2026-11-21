@@ -58,6 +58,16 @@
       ],
       "port": 8081,
       "autoPort": false
+    },
+    {
+      "name": "expo-dev",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd mobile-app && PATH=\"$HOME/.nvm/versions/node/v24.22.1/bin:$HOME/Library/Android/sdk/platform-tools:$PATH\" npx expo start --dev-client --port 8081"
+      ],
+      "port": 8081,
+      "autoPort": false
     }
   ]
 }
