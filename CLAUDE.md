@@ -46,7 +46,7 @@ The end goal is an Android app in React Native, in `mobile-app/`, built in stage
   - `darkMode: "class"` in the Tailwind config is required: with the default "media", NativeWind throws on web.
   - Card shadows use the RN `boxShadow` style (`components/note-card.tsx`).
   - Develop in **Expo Go** first (the owner's usual flow): `.claude/launch.json` `expo-go` starts Metro on 8081 and opens the app on the running emulator (`Small_Phone_API_34`, 360×640 dp, so check that screens fit it). Screenshot with `adb exec-out screencap -p`. `expo-web` (port 8090) is only for quick looks in the browser pane. Don't set `CI=1` on these servers: it turns off Metro's file watching.
-  - A development build (`expo-dev-client` is installed, provisional package `com.johnsonlin.abclimadasar`) is needed once a native module that Expo Go lacks arrives (Google Sign-In, AdMob, Play Billing). Gradle then needs a JDK 17 toolchain; Android Studio only bundles JDK 21, and `brew install openjdk@17` compiles Python from source on this Intel Mac (slow), so prefer a prebuilt JDK 17 or EAS Build.
+  - A development build (`expo-dev-client` is installed, package `com.johnsonlin.abclimadasar` (final, agreed 2026-11-21)) is needed once a native module that Expo Go lacks arrives (Google Sign-In, AdMob, Play Billing). Gradle then needs a JDK 17 toolchain; Android Studio only bundles JDK 21, and `brew install openjdk@17` compiles Python from source on this Intel Mac (slow), so prefer a prebuilt JDK 17 or EAS Build.
 
 ## Commands
 
@@ -58,7 +58,9 @@ npm --prefix backend run dev          # NESIO backend on :3001 (nodemon)
 npm --prefix client run dev:all       # both
 npm --prefix client run lint
 (cd client && npx tsc --noEmit)       # client typecheck
-npm --prefix backend test             # vitest
+npm --prefix backend test             # vitest (auth tests use PGlite, no Docker needed)
+docker compose -f backend/docker-compose.yml up -d   # local Postgres on 127.0.0.1:5433 (app login)
+(cd backend && npx drizzle-kit generate --name <change>)  # new SQL migration after a schema change
 npm --prefix backend run typecheck
 npm --prefix client run build
 ```
@@ -75,6 +77,8 @@ Client env (`client/.env.example`): `NEXT_PUBLIC_API_URL` (backend URL) and `SIT
   - next/image: use `loading="eager" fetchPriority="high"`, not `priority`.
 - React 19, Tailwind v4 (`@container`/`cqw`), Zustand, TanStack Query, socket.io-client, GSAP (home hero only), lucide-react.
 - Backend: NESIO (Socket.IO + REST, in-memory, zod-validated inputs). Project logic goes in `src/modules/` and `src/project/`; NESIO core stays untouched.
+  - App login (Android only; web players stay guests): `src/project/auth/` + Postgres via Drizzle (`src/project/db/`, migrations in `drizzle/`, run automatically at start). Google ID token (audience = Web client ID in `GOOGLE_CLIENT_IDS`) is exchanged at `POST /api/auth/google` for our own HS256 access token (15 min, `APP_JWT_SECRET`) and a rotating refresh token (30 days, only its SHA-256 hash is stored; reusing a rotated token revokes the whole family, so the app must single-flight refreshes). Also `/refresh`, `/logout`, `GET`/`DELETE /me` (delete account). The socket handshake accepts both: `auth.token` = app user (account must still exist), no token = guest. Without `DATABASE_URL` (dev) app login is off (503) and the web still works; production requires it. Types are in `contract.ts`.
+  - Google Cloud project "ABC Lima Dasar": Web client ID `917923038071-gd8tgt6t0daf2frlm1qjactm84ktptu4.apps.googleusercontent.com`, Android client ID `917923038071-7tm5ld9gs65bs0b5cjms0mgpsfhdlf39.apps.googleusercontent.com` (debug SHA-1; add the Play signing SHA-1 as another Android client before release). Client IDs are not secrets.
 - The OG image (`client/src/app/opengraph-image.tsx`) is an ImageResponse converted to JPEG with sharp in a `"use cache"` helper. Keep it under ~300 KB or WhatsApp skips the preview.
 
 ## Game rules (current)
