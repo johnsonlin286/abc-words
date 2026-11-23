@@ -33,6 +33,13 @@ export const AFK_ROUNDS = 2;
 /** Same as `PING_COOLDOWN_MS` in backend/src/modules/abc-words: the host can call a player once per this. */
 export const PING_COOLDOWN_MS = 10_000;
 
+/**
+ * Same as `ROOM_KEYS` in backend/src/project/keys/rules.ts (Android app accounts only; web guests have
+ * no keys). A host spends one key when starting a game; joining is free. `regenMinutes[n]` is the
+ * time to go from n keys to n + 1, so the refill can get slower or faster per level.
+ */
+export const ROOM_KEYS = { max: 5, regenMinutes: [30, 30, 30, 30, 30] } as const;
+
 /** Online players other than the host who haven't pressed "Siap"; the host can't start until it's empty. */
 export function playersNotReady(
   members: { userId: string; name: string; isConnected: boolean }[],
