@@ -35,8 +35,9 @@ export const PING_COOLDOWN_MS = 10_000;
 
 /**
  * Same as `ROOM_KEYS` in backend/src/project/keys/rules.ts (Android app accounts only; web guests have
- * no keys). A host spends one key when starting a game; joining is free. `regenMinutes[n]` is the
- * time to go from n keys to n + 1, so the refill can get slower or faster per level.
+ * no keys). Creating a room needs at least one key and the host spends one for every game started;
+ * joining is free. `regenMinutes[n]` is the time to go from n keys to n + 1, so the refill can get
+ * slower or faster per level.
  */
 export const ROOM_KEYS = { max: 5, regenMinutes: [30, 30, 30, 30, 30] } as const;
 
