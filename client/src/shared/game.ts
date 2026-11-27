@@ -65,6 +65,8 @@ export const ANSWER_MS = 30_000;
 /** Same as `ANSWER_SECONDS_OPTIONS` in backend/src/modules/abc-words: answer time the host can pick (default 30). */
 export const ANSWER_SECONDS_OPTIONS = [20, 25, 30, 35, 40] as const;
 export const LAST_PLAYER_MS = 10_000;
+/** Same as `abandonMs` in backend/src/modules/abc-words: how long a game waits for missing players. */
+export const WAIT_FOR_PLAYERS_MS = 30_000;
 export const VOTING_MS = 20_000;
 /** Same as `ANSWER_RETRY_LIMIT`, `retryWindowMs` and `retryCooldownMs` in backend/src/modules/abc-words. */
 export const ANSWER_RETRY_LIMIT = 3;
@@ -124,10 +126,16 @@ export type GameState = ChatState & {
   round: number;
   /** Time left in this phase when the server sent it; null when the phase has no limit. */
   remainingMs: number | null;
+  /** The game stands still waiting for players (one pause per player per game); `remainingMs` is null. */
+  paused: boolean;
+  /** Time left before the game ends because fewer than `MIN_PLAYERS` are online; null while enough are. */
+  waitingForPlayersMs: number | null;
   /** Full length of this phase, for the countdown bar. */
   phaseMs: number | null;
   /** Why the last game ended; shown in the waiting room until the next game starts. */
   endedReason: string | null;
+  /** Players who left during the game; they stay on the final scores. */
+  departed: { userId: string; name: string }[];
   usedLetters: string[];
   /** Who has picked a number. The numbers themselves stay secret until the reveal. */
   pickedBy: string[];
@@ -231,6 +239,11 @@ export function rankPlayers(
   return players
     .map((p) => ({ ...p, rank: players.filter((o) => ahead(o, p)).length + 1 }))
     .sort((a, b) => a.rank - b.rank);
+}
+
+/** True once a round has a result: stopping the game from then on shows the final scores. */
+export function hasFinishedRound(state: Pick<GameState, "phase" | "round">): boolean {
+  return state.phase === "result" || state.round > 1;
 }
 
 /** "6,214 detik": seconds with milliseconds, Indonesian decimal comma. */

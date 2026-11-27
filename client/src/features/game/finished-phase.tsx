@@ -16,7 +16,10 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
   const endGame = useRoomStore((s) => s.endGame);
   const [error, setError] = useState<string | null>(null);
 
-  const ranking = rankPlayers(room.members, room.state.scores, room.state.speed);
+  // Players who left keep their name and score here.
+  const { departed, endedReason } = room.state;
+  const ranking = rankPlayers([...room.members, ...departed], room.state.scores, room.state.speed);
+  const hasLeft = (userId: string) => departed.some((p) => p.userId === userId);
   const topScore = ranking[0]?.score ?? 0;
   const winners = topScore > 0 ? ranking.filter((p) => p.rank === 1) : [];
   // Same score as the winner but ranked lower: the answer time decided it, so say so.
@@ -26,6 +29,12 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
   return (
     <div className="space-y-7">
       <div className="flex flex-col items-center gap-3 text-center">
+        {/* Set only when the game stopped before the last round. */}
+        {endedReason && (
+          <p className="rounded-xl border-2 border-dashed border-ink/40 bg-highlight-soft px-3.5 py-2 text-sm font-medium">
+            {endedReason}.
+          </p>
+        )}
         {winners.length > 0 ? (
           <>
             <Image src={gold} alt="" sizes="96px" loading="eager" className="letter-stamp h-24 w-auto" />
@@ -73,7 +82,10 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
               </span>
             )}
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-lg font-semibold break-all">{p.name}</span>
+              <span className="text-lg font-semibold break-all">
+                {p.name}
+                {hasLeft(p.userId) && <span className="ml-2 text-sm font-medium text-ink-soft">(keluar)</span>}
+              </span>
               {p.avgMs !== null && (
                 <span className="text-sm font-medium text-ink-soft">
                   Rata-rata kecepatan jawab: <span className="tabular-nums">{formatAnswerTime(p.avgMs)}</span>

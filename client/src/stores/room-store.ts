@@ -46,6 +46,8 @@ type RoomState = {
   messages: ChatMessage[];
   /** Local time at which the current game phase ends; null when it has no limit. */
   phaseEndsAt: number | null;
+  /** Local time at which a game waiting for missing players gives up; null while enough are online. */
+  waitingEndsAt: number | null;
   /** Local time until which this player is muted in chat for spamming; only they see it. */
   chatMutedUntil: number | null;
   pending: boolean;
@@ -130,6 +132,7 @@ const NO_ROOM = {
   room: null,
   messages: [] as ChatMessage[],
   phaseEndsAt: null,
+  waitingEndsAt: null,
   chatMutedUntil: null,
 };
 
@@ -144,6 +147,8 @@ export const useRoomStore = create<RoomState>((set, get) => {
       room,
       messages: room.state.messages.slice(-MAX_MESSAGES),
       phaseEndsAt: room.state.remainingMs === null ? null : Date.now() + room.state.remainingMs,
+      waitingEndsAt:
+        room.state.waitingForPlayersMs === null ? null : Date.now() + room.state.waitingForPlayersMs,
       chatMutedUntil: loadChatMute(room.id),
     });
 

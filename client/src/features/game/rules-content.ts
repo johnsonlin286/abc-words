@@ -22,6 +22,7 @@ import {
   REJECTIONS,
   REVEAL_MS,
   VOTING_MS,
+  WAIT_FOR_PLAYERS_MS,
   formatPoints,
 } from "@/shared/game";
 
@@ -44,6 +45,8 @@ export const STEPS = [
     body: [
       `Butuh ${MIN_PLAYERS}–${LIMITS.maxMembers} pemain. Host memilih kategori dan jumlah ronde (maksimal ${MAX_ROUNDS}).`,
       'Setiap pemain menekan "Saya siap!"; host baru bisa memulai setelah semua siap. Host bisa memanggil (🔔) pemain yang belum siap, atau mengeluarkannya dari room. Pemain yang dikeluarkan tetap boleh masuk lagi.',
+      `Saat bermain, kalau pemain online tinggal satu, permainan dijeda untuk menunggu yang lain, paling lama ${seconds(WAIT_FOR_PLAYERS_MS)}. Tiap pemain hanya bisa memicu jeda sekali per permainan: kalau putus lagi, waktu tetap berjalan. Permainan berakhir kalau tidak ada yang kembali.`,
+      "Permainan yang berhenti sebelum ronde terakhir (host mengakhiri, atau pemain tidak cukup) tetap menampilkan skor akhir kalau sudah ada ronde yang selesai. Skor pemain yang keluar ikut dihitung; ronde yang belum selesai tidak.",
     ],
   },
   {

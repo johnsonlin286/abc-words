@@ -3,15 +3,17 @@
 import { Flag } from "lucide-react";
 import { useRef, useState } from "react";
 import { buttonPrimary, buttonSecondary, errorText } from "@/components/ui";
+import { hasFinishedRound } from "@/shared/game";
 import { useRoomStore } from "@/stores/room-store";
 
 /**
  * Host-only "Akhiri permainan": sits in the room bar, away from the phase buttons and the chat,
- * and asks for confirmation because ending sends everyone to the final scores.
+ * and asks for confirmation because ending stops the game for everyone.
  */
 export default function EndGameDialog({ className }: { className?: string }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const endGame = useRoomStore((s) => s.endGame);
+  const showsScores = useRoomStore((s) => !!s.room && hasFinishedRound(s.room.state));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -49,7 +51,9 @@ export default function EndGameDialog({ className }: { className?: string }) {
             Akhiri permainan?
           </h2>
           <p id="end-game-desc" className="font-medium text-ink-soft">
-            Semua pemain langsung melihat skor akhir. Skor dihitung sampai ronde ini.
+            {showsScores
+              ? "Semua pemain langsung melihat skor akhir. Ronde yang belum selesai tidak dihitung."
+              : "Belum ada ronde yang selesai, jadi semua pemain kembali ke ruang tunggu tanpa skor."}
           </p>
           {error && <p className={errorText}>{error}</p>}
           <div className="flex flex-wrap gap-3 pt-1">

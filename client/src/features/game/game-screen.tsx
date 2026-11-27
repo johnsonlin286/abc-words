@@ -16,6 +16,7 @@ import ResultPhase from "./result-phase";
 import RoomBar from "./room-bar";
 import ScoreStrip from "./score-strip";
 import VotingPhase from "./voting-phase";
+import WaitingForPlayers from "./waiting-for-players";
 import WaitingRoom from "./waiting-room";
 
 /**
@@ -58,14 +59,18 @@ export default function GameScreen() {
       {playing && <ScoreStrip room={room} />}
 
       <section aria-label="Permainan" className="note-card flex flex-col gap-6 p-4 sm:p-6">
+        {playing && <WaitingForPlayers />}
         {playing && isAfk(room.state, myId) && <AfkNotice />}
-        {phase === "waiting" && <WaitingRoom room={room} myId={myId} />}
-        {phase === "picking" && <PickingPhase room={room} />}
-        {phase === "reveal" && reveal && <RevealPhase key={round} room={room} reveal={reveal} />}
-        {phase === "answering" && reveal && <AnsweringPhase key={round} room={room} letter={reveal.letter} />}
-        {phase === "voting" && reveal && <VotingPhase key={round} room={room} letter={reveal.letter} />}
-        {phase === "result" && reveal && <ResultPhase room={room} letter={reveal.letter} />}
-        {phase === "finished" && <FinishedPhase room={room} isHost={room.hostId === myId} />}
+        {/* A paused game can be seen but not played. */}
+        <div inert={room.state.paused} className={`flex flex-col gap-6 ${room.state.paused ? "opacity-50" : ""}`}>
+          {phase === "waiting" && <WaitingRoom room={room} myId={myId} />}
+          {phase === "picking" && <PickingPhase room={room} />}
+          {phase === "reveal" && reveal && <RevealPhase key={round} room={room} reveal={reveal} />}
+          {phase === "answering" && reveal && <AnsweringPhase key={round} room={room} letter={reveal.letter} />}
+          {phase === "voting" && reveal && <VotingPhase key={round} room={room} letter={reveal.letter} />}
+          {phase === "result" && reveal && <ResultPhase room={room} letter={reveal.letter} />}
+          {phase === "finished" && <FinishedPhase room={room} isHost={room.hostId === myId} />}
+        </div>
       </section>
 
       {/* One chat at a time: the inline card on wider screens, the floating dock on phones. */}
