@@ -46,7 +46,7 @@ export const STEPS = [
       `Butuh ${MIN_PLAYERS}–${LIMITS.maxMembers} pemain. Host memilih kategori dan jumlah ronde (maksimal ${MAX_ROUNDS}).`,
       'Setiap pemain menekan "Saya siap!"; host baru bisa memulai setelah semua siap. Host bisa memanggil (🔔) pemain yang belum siap, atau mengeluarkannya dari room. Pemain yang dikeluarkan tetap boleh masuk lagi.',
       `Saat bermain, kalau pemain online tinggal satu, permainan dijeda untuk menunggu yang lain, paling lama ${seconds(WAIT_FOR_PLAYERS_MS)}. Tiap pemain hanya bisa memicu jeda sekali per permainan: kalau putus lagi, waktu tetap berjalan. Permainan berakhir kalau tidak ada yang kembali.`,
-      "Permainan yang berhenti sebelum ronde terakhir (host mengakhiri, atau pemain tidak cukup) tetap menampilkan skor akhir kalau sudah ada ronde yang selesai. Skor pemain yang keluar ikut dihitung; ronde yang belum selesai tidak.",
+      "Permainan yang berhenti sebelum ronde terakhir (host mengakhiri, atau pemain tidak cukup) tetap menampilkan skor akhir kalau sudah ada ronde yang selesai. Ronde yang belum selesai tidak dihitung. Pemain yang keluar tetap tercantum dengan skornya, di paling bawah dan tanpa peringkat.",
     ],
   },
   {
@@ -101,4 +101,4 @@ export const CHAT_RULES = [
 ];
 
 export const SCORE_NOTE =
-  "Skor tidak bisa di bawah 0. Skor tertinggi setelah ronde terakhir menang. Kalau skor sama, yang rata-rata menjawab lebih cepat (dihitung dari jawaban yang lolos, sampai milidetik) di atas; kalau itu pun sama, juara bersama.";
+  "Skor tidak bisa di bawah 0. Skor tertinggi setelah ronde terakhir menang. Kalau skor sama, yang rata-rata menjawab lebih cepat (dihitung dari jawaban yang lolos, sampai milidetik) di atas; kalau itu pun sama, juara bersama. Pemain dengan 0 poin diurutkan dari rata-rata waktu jawabnya, tanpa piala; yang tidak punya jawaban lolos sama sekali tidak mendapat peringkat.";

@@ -241,6 +241,36 @@ export function rankPlayers(
     .sort((a, b) => a.rank - b.rank);
 }
 
+export type FinalPlayer = Omit<RankedPlayer, "rank"> & {
+  /** Null for players who left and for players with no accepted answer at all: they get no rank. */
+  rank: number | null;
+  left: boolean;
+};
+
+/**
+ * Final scores (owner, 2026-11-27): players still in the room are ranked by score, then by average
+ * answer time, as during the game. A player with 0 points still has a rank when they have an answer
+ * time to compare (only players with points win or get a trophy); one with no accepted answer at all
+ * has none. Players who left come last, without a rank, whatever their score.
+ */
+export function finalRanking(
+  members: { userId: string; name: string }[],
+  departed: { userId: string; name: string }[],
+  scores: Record<string, number>,
+  speed: Record<string, AnswerSpeed>,
+): FinalPlayer[] {
+  // Players without points or time are behind everyone else, so the ranks above them hold.
+  const left = departed.filter((d) => !members.some((m) => m.userId === d.userId));
+  return [
+    ...rankPlayers(members, scores, speed).map((p) => ({
+      ...p,
+      rank: p.score > 0 || p.avgMs !== null ? p.rank : null,
+      left: false,
+    })),
+    ...rankPlayers(left, scores, speed).map((p) => ({ ...p, rank: null, left: true })),
+  ];
+}
+
 /** True once a round has a result: stopping the game from then on shows the final scores. */
 export function hasFinishedRound(state: Pick<GameState, "phase" | "round">): boolean {
   return state.phase === "result" || state.round > 1;

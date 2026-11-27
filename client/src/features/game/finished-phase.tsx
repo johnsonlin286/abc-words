@@ -6,7 +6,7 @@ import bronze from "@/assets/trophies/bronze.webp";
 import gold from "@/assets/trophies/gold.webp";
 import silver from "@/assets/trophies/silver.webp";
 import { buttonPrimary, errorText, hint } from "@/components/ui";
-import { formatAnswerTime, rankPlayers } from "@/shared/game";
+import { finalRanking, formatAnswerTime } from "@/shared/game";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 
 /** Trophy stickers for the top three ranks (ties share a rank, so share a trophy). */
@@ -18,12 +18,14 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
 
   // Players who left keep their name and score here.
   const { departed, endedReason } = room.state;
-  const ranking = rankPlayers([...room.members, ...departed], room.state.scores, room.state.speed);
-  const hasLeft = (userId: string) => departed.some((p) => p.userId === userId);
-  const topScore = ranking[0]?.score ?? 0;
-  const winners = topScore > 0 ? ranking.filter((p) => p.rank === 1) : [];
+  // Only players still here with points are ranked; players who left come last, without a rank.
+  const ranking = finalRanking(room.members, departed, room.state.scores, room.state.speed);
+  const ranked = ranking.filter((p) => p.rank !== null);
+  const topScore = ranked[0]?.score ?? 0;
+  // Only players with points win or get a trophy.
+  const winners = ranked.filter((p) => p.rank === 1 && p.score > 0);
   // Same score as the winner but ranked lower: the answer time decided it, so say so.
-  const outpaced = winners.length > 0 ? ranking.filter((p) => p.score === topScore && p.rank > 1) : [];
+  const outpaced = winners.length > 0 ? ranked.filter((p) => p.score === topScore && p.rank !== 1) : [];
   const hostName = room.members.find((m) => m.userId === room.hostId)?.name;
 
   return (
@@ -65,7 +67,7 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
       <ol aria-label="Peringkat" className="flex flex-col">
         {ranking.map((p) => (
           <li key={p.userId} className="flex items-center gap-3 border-b-2 border-paper-line py-2.5 last:border-0">
-            {p.score > 0 && p.rank <= TROPHIES.length ? (
+            {p.rank !== null && p.score > 0 && p.rank <= TROPHIES.length ? (
               <span className="flex h-10 w-9 shrink-0 items-end justify-center">
                 {/* Silver and bronze are drawn smaller than gold; keep that difference. */}
                 <Image
@@ -76,15 +78,18 @@ export default function FinishedPhase({ room, isHost }: { room: GameRoomView; is
                   style={{ height: `${(TROPHIES[p.rank - 1].height / gold.height) * 2.5}rem` }}
                 />
               </span>
-            ) : (
+            ) : p.rank !== null ? (
               <span className="grid size-9 shrink-0 place-items-center rounded-full border-2 border-ink/30 bg-white font-bold text-ink-soft tabular-nums">
                 {p.rank}
               </span>
+            ) : (
+              // Left the game, or no accepted answer: no rank, but the names stay lined up.
+              <span aria-hidden className="size-9 shrink-0" />
             )}
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="text-lg font-semibold break-all">
                 {p.name}
-                {hasLeft(p.userId) && <span className="ml-2 text-sm font-medium text-ink-soft">(keluar)</span>}
+                {p.left && <span className="ml-2 text-sm font-medium text-ink-soft">(keluar)</span>}
               </span>
               {p.avgMs !== null && (
                 <span className="text-sm font-medium text-ink-soft">
