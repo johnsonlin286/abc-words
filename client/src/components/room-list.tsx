@@ -5,10 +5,13 @@ import { useEffect } from "react";
 import { listRooms } from "@/lib/api";
 import { getGameSocket } from "@/lib/game-socket";
 import { buttonSecondary, errorText, linkButton } from "@/components/ui";
-import type { RoomSummary } from "@/shared/contract";
+import type { LobbyRoom } from "@/shared/contract";
+
+/** How often to look again while a listed room waits for its host's next key. */
+const KEY_WAIT_REFETCH_MS = 60_000;
 
 type Props = {
-  onSelect: (room: RoomSummary) => void;
+  onSelect: (room: LobbyRoom) => void;
   /** Called from the empty list's "Buat room" button. */
   onCreate: () => void;
 };
@@ -22,14 +25,19 @@ export function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
   );
 }
 
-/** Where a room stands for someone in the lobby. Only rooms that haven't started and have space can be joined. */
-export function getRoomStatus(room: RoomSummary): { label: string; dot: string; joinable: boolean } {
+/**
+ * Where a room stands for someone in the lobby (same as the app). Only rooms that haven't started and
+ * have space can be joined; one whose host has no key can still be joined by its code (friends
+ * waiting together), but isn't picked from the list.
+ */
+export function getRoomStatus(room: LobbyRoom): { label: string; dot: string; joinable: boolean } {
   if (room.locked) return { label: "Sedang bermain", dot: "bg-[#e0a21b]", joinable: false };
   if (room.memberCount >= room.maxMembers) return { label: "Ruangan penuh", dot: "bg-redpen", joinable: false };
+  if (room.hostNeedsKey) return { label: "Host kehabisan kunci", dot: "bg-ink-faint", joinable: true };
   return { label: "Belum mulai", dot: "bg-success", joinable: true };
 }
 
-export function RoomStatusLabel({ room }: { room: RoomSummary }) {
+export function RoomStatusLabel({ room }: { room: LobbyRoom }) {
   const status = getRoomStatus(room);
   return (
     <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-ink-soft">
@@ -62,7 +70,13 @@ export function useLiveRoomData() {
 }
 
 export default function RoomList({ onSelect, onCreate }: Props) {
-  const rooms = useQuery({ queryKey: ["rooms"], queryFn: listRooms, retry: false });
+  const rooms = useQuery({
+    queryKey: ["rooms"],
+    queryFn: listRooms,
+    retry: false,
+    // A refilled key changes nothing on the server's rooms, so no "rooms:changed" announces it.
+    refetchInterval: ({ state }) => (state.data?.some((room) => room.hostNeedsKey) ? KEY_WAIT_REFETCH_MS : false),
+  });
   useLiveRoomData();
   const count = rooms.data?.length;
 
@@ -96,12 +110,12 @@ export default function RoomList({ onSelect, onCreate }: Props) {
       {rooms.data && rooms.data.length > 0 && (
         <ul className="flex max-h-[26rem] flex-col gap-2.5 overflow-y-auto p-1">
           {rooms.data.map((room) => {
-            const { joinable } = getRoomStatus(room);
+            const selectable = getRoomStatus(room).joinable && !room.hostNeedsKey;
             return (
               <li key={room.id}>
                 <button
                   type="button"
-                  disabled={!joinable}
+                  disabled={!selectable}
                   onClick={() => onSelect(room)}
                   aria-label={`Room ${room.id}, host ${room.hostName ?? "tidak ada"}, ${room.memberCount} dari ${room.maxMembers} pemain, ${getRoomStatus(room).label}`}
                   className="flex w-full items-center gap-3 rounded-xl border-2 border-ink bg-white px-3.5 py-2.5 text-left hover:bg-highlight-soft focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen disabled:cursor-not-allowed disabled:border-ink/25 disabled:bg-paper disabled:hover:bg-paper"

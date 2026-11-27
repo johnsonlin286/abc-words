@@ -1,19 +1,19 @@
 "use client";
 
-import { Copy, Link2, LogOut } from "lucide-react";
+import { Copy, Link2 } from "lucide-react";
 import { useState } from "react";
 import { VisibilityBadge } from "@/components/room-list";
 import { copyText } from "@/lib/clipboard";
-import { useRoomStore, type GameRoomView } from "@/stores/room-store";
+import type { GameRoomView } from "@/stores/room-store";
 import EndGameDialog from "./end-game-dialog";
+import LeaveRoomDialog from "./leave-room-dialog";
 import RulesDialog from "./rules-dialog";
 
 const action =
   "inline-flex items-center gap-1.5 rounded-md text-sm font-semibold text-ink underline decoration-highlight decoration-2 underline-offset-4 hover:decoration-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen";
 
-/** `canEnd`: the host, while a game is running. */
-export default function RoomBar({ room, canEnd }: { room: GameRoomView; canEnd: boolean }) {
-  const leaveRoom = useRoomStore((s) => s.leaveRoom);
+/** `canEnd`: the host, while a game is running. `playing`: a game is running (leaving asks first). */
+export default function RoomBar({ room, canEnd, playing }: { room: GameRoomView; canEnd: boolean; playing: boolean }) {
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
 
   const copy = async (kind: "code" | "link", value: string) => {
@@ -35,16 +35,13 @@ export default function RoomBar({ room, canEnd }: { room: GameRoomView; canEnd: 
         <RulesDialog className={action} />
         <button type="button" className={action} onClick={() => copy("code", room.id)}>
           <Copy aria-hidden className="size-4" strokeWidth={2.5} />
-          {copied === "code" ? "Kode tersalin" : "Salin kode"}
+          {copied === "code" ? "Kode Tersalin" : "Salin Kode"}
         </button>
         <button type="button" className={action} onClick={() => copy("link", `${window.location.origin}/room/${room.id}`)}>
           <Link2 aria-hidden className="size-4" strokeWidth={2.5} />
-          {copied === "link" ? "Link tersalin" : "Salin link undangan"}
+          {copied === "link" ? "Link Tersalin" : "Salin Link Undangan"}
         </button>
-        <button type="button" className={`${action} text-redpen decoration-redpen/30 hover:decoration-redpen`} onClick={leaveRoom}>
-          <LogOut aria-hidden className="size-4" strokeWidth={2.5} />
-          Keluar room
-        </button>
+        <LeaveRoomDialog className={`${action} text-redpen decoration-redpen/30 hover:decoration-redpen`} playing={playing} />
         {canEnd && <EndGameDialog className={`${action} text-redpen decoration-redpen/30 hover:decoration-redpen`} />}
       </div>
     </header>

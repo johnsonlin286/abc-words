@@ -1,5 +1,6 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { useState } from "react";
 import {
   LONE_REJECTION_WARNINGS,
@@ -10,210 +11,201 @@ import {
   type GameState,
   type RejectReason,
 } from "@/shared/game";
-import { buttonPrimary, buttonSecondary, errorText } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 import Countdown from "./countdown";
-import { isAfk } from "./afk";
+import InfoBadge from "./info-badge";
 import RoundHeader from "./round-header";
 import VerifiedBadge from "./verified-badge";
 import { WarningIcon, warningText } from "./warning-badge";
 
 type Answer = GameState["answers"][number];
 
-export default function VotingPhase({ room, letter }: { room: GameRoomView; letter: string }) {
+/** The rules of judging, behind the info button so the answers get the room (same as the app). */
+function rulesText(oneJudge: boolean, anyVerified: boolean): string {
+  const rejecting = oneJudge
+    ? "Kalian main berdua: jawaban yang kamu tolak langsung gugur, tapi tanpa pengurangan poin. Jatah tolak tidak dikembalikan."
+    : `Jawaban yang gugur ${formatPoints(POINTS.rejected)} poin. Tolakan yang disetujui pemain lain dikembalikan ke jatahmu. Menolak sendirian jawaban yang tetap lolos, mulai kali ke-${LONE_REJECTION_WARNINGS + 1}: ${formatPoints(POINTS.loneRejection)} poin.`;
+  const verified = "Jawaban Terverifikasi ada di daftar kategori ini, jadi langsung lolos dan tidak bisa ditolak.";
+  return anyVerified ? `${rejecting} ${verified}` : rejecting;
+}
+
+/** "Salah ejaan" on a button: every word capitalized. */
+function buttonLabel(label: string): string {
+  return label.replace(/\b\w/g, (first) => first.toUpperCase());
+}
+
+/**
+ * All answers in one compact list (same as the app): reject with a reason under the answer, votes
+ * public. The button that ends this player's judging is in `VotingFooter`, which stays on screen.
+ */
+export default function VotingPhase({
+  room,
+  letter,
+  listRef,
+}: {
+  room: GameRoomView;
+  letter: string;
+  /** The answer list, so the footer can tell which answers are still below the screen. */
+  listRef?: React.Ref<HTMLOListElement>;
+}) {
   const myId = useAuthStore((s) => s.user?.userId);
   const endsAt = useRoomStore((s) => s.phaseEndsAt);
-  const setRejection = useRoomStore((s) => s.setRejection);
-  const setVotingDone = useRoomStore((s) => s.setVotingDone);
-  const [error, setError] = useState<string | null>(null);
-  /** Answer whose reason picker is open before the rejection is sent. */
+  /** Answer whose reasons are open before a rejection is sent. */
   const [choosingFor, setChoosingFor] = useState<string | null>(null);
 
-  const { answers, rejectionsLeft, votingDone, phaseMs } = room.state;
-  // Same rule as the server: online, not AFK, with someone else's unverified answer to judge.
-  const judges = room.members.filter(
-    (m) =>
-      m.isConnected &&
-      !isAfk(room.state, m.userId) &&
-      answers.some((a) => a.userId !== m.userId && !a.verified),
-  );
+  const { answers, rejectionsLeft, phaseMs } = room.state;
   const anyVerified = answers.some((a) => a.verified);
-  const isJudge = judges.some((m) => m.userId === myId);
-  const iAmDone = myId !== undefined && votingDone.includes(myId);
-  const doneCount = judges.filter((m) => votingDone.includes(m.userId)).length;
   const myLoneRejections = (myId && room.state.loneRejections[myId]) || 0;
   // Same rule as the server: with two players online, each answer has one judge.
   const oneJudge = room.members.filter((m) => m.isConnected).length === 2;
 
-  const send = async (answerUserId: string, reason: RejectReason | null) => {
-    setChoosingFor(null);
-    setError(await setRejection(answerUserId, reason));
-  };
-
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <RoundHeader room={room} letter={letter} />
       {endsAt !== null && phaseMs !== null && <Countdown endsAt={endsAt} totalMs={phaseMs} />}
 
-      <div>
-        <h3 className="text-lg font-bold">Ada jawaban yang tidak sesuai? Coret!</h3>
-        <p className="mt-1 text-sm leading-relaxed font-medium text-ink-soft">
-          {oneJudge ? (
-            <>
-              Kalian main berdua: jawaban yang kamu tolak langsung gugur, tapi tanpa pengurangan poin. Jatah tolak
-              tidak dikembalikan.{" "}
-            </>
-          ) : (
-            <>
-              Jawaban yang gugur {formatPoints(POINTS.rejected)} poin. Tolakan yang disetujui pemain lain dikembalikan
-              ke jatahmu. Menolak sendirian jawaban yang tetap lolos, mulai kali ke-{LONE_REJECTION_WARNINGS + 1}:{" "}
-              {formatPoints(POINTS.loneRejection)} poin.{" "}
-            </>
-          )}
-          Sisa jatah tolakmu: <span className="rounded-sm bg-highlight px-1 font-bold text-ink tabular-nums">{rejectionsLeft}</span>.
+      <div className="flex items-center justify-between gap-1">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <h3 className="text-lg font-bold whitespace-nowrap">Coret yang salah!</h3>
+          <InfoBadge label="Aturan menilai" explanation={rulesText(oneJudge, anyVerified)}>
+            <Info aria-hidden className="size-5 text-ink-soft" strokeWidth={2.5} />
+          </InfoBadge>
+        </div>
+        <p className="shrink-0 text-sm font-medium text-ink-soft">
+          Jatah tolak: <span className="rounded-sm bg-highlight px-1 font-bold text-ink tabular-nums">{rejectionsLeft}</span>
         </p>
-        {anyVerified && (
-          <p className="mt-2 text-sm leading-relaxed font-medium text-ink-soft">
-            Jawaban <span className="font-bold text-success">Terverifikasi</span> ada di daftar kategori ini, jadi
-            langsung lolos dan tidak bisa ditolak.
-          </p>
-        )}
-        {myLoneRejections >= LONE_REJECTION_WARNINGS && (
-          <p className="mt-2 flex items-start gap-1.5 text-sm font-semibold text-redpen">
-            <WarningIcon className="mt-0.5 shrink-0" />
-            {warningText(myLoneRejections, null)}
-          </p>
-        )}
       </div>
 
-      <ol className="flex flex-col gap-2.5">
-        {answers.map((a) => {
-          const isMine = a.userId === myId;
-          const myRejection = a.rejectedBy.find((r) => r.userId === myId);
-          const showReasons = !isMine && (myRejection !== undefined || choosingFor === a.userId);
-          return (
-            <li
-              key={a.userId}
-              className={`rounded-xl border-2 px-3.5 py-2.5 ${a.rejectedBy.length > 0 ? "border-redpen bg-white" : "border-ink/20 bg-white"}`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-lg font-bold break-words">{a.text}</p>
-                  <p className="text-sm font-medium text-ink-soft">{isMine ? "Jawabanmu" : a.name}</p>
-                </div>
-                {a.verified ? (
-                  <VerifiedBadge />
-                ) : isMine ? null : (
-                  <RejectButton
-                    answer={a}
-                    rejected={myRejection !== undefined}
-                    choosing={choosingFor === a.userId}
-                    disabled={myRejection === undefined && rejectionsLeft === 0}
-                    onClick={() => {
-                      if (myRejection) void send(a.userId, null);
-                      else setChoosingFor(choosingFor === a.userId ? null : a.userId);
-                    }}
-                  />
-                )}
-              </div>
+      {oneJudge && <p className="text-sm font-medium text-ink-soft">Main berdua: tolakanmu langsung menggugurkan.</p>}
+      {myLoneRejections >= LONE_REJECTION_WARNINGS && (
+        <p className="flex items-start gap-1.5 text-sm font-semibold text-redpen">
+          <WarningIcon className="mt-0.5 shrink-0" />
+          {warningText(myLoneRejections, null)}
+        </p>
+      )}
 
-              {showReasons && (
-                <fieldset className="mt-2">
-                  <legend className="sr-only">Alasan menolak {a.text}</legend>
-                  <div className="flex flex-wrap gap-2">
-                    {REJECT_REASONS.map((r) => {
-                      const selected = myRejection?.reason === r.id;
-                      return (
-                        <button
-                          key={r.id}
-                          type="button"
-                          aria-pressed={selected}
-                          onClick={() => !selected && void send(a.userId, r.id)}
-                          className={`rounded-full border-2 px-3 py-1 text-sm font-semibold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen ${
-                            selected
-                              ? "border-redpen bg-redpen text-white"
-                              : "border-ink/30 bg-white text-ink-soft hover:border-ink hover:text-ink"
-                          }`}
-                        >
-                          {r.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {!myRejection && <p className="mt-1.5 text-xs font-medium text-ink-soft">Pilih alasan untuk menolak.</p>}
-                </fieldset>
-              )}
-
-              <RejectedBy answer={a} />
-            </li>
-          );
-        })}
+      <ol ref={listRef} className="flex flex-col gap-2">
+        {answers.map((a) => (
+          <AnswerRow
+            key={a.userId}
+            answer={a}
+            myId={myId}
+            choosing={choosingFor === a.userId}
+            noRejectionsLeft={rejectionsLeft === 0}
+            onChoose={(open) => setChoosingFor(open ? a.userId : null)}
+          />
+        ))}
       </ol>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium text-ink-soft" aria-live="polite">
-          {isJudge
-            ? `${doneCount} dari ${judges.length} pemain selesai menilai.`
-            : "Menunggu pemain lain menilai jawabanmu."}
-        </p>
-        {isJudge && (
-          <button
-            type="button"
-            aria-pressed={iAmDone}
-            onClick={async () => setError(await setVotingDone(!iAmDone))}
-            className={iAmDone ? buttonSecondary : buttonPrimary}
-          >
-            {iAmDone ? "Belum selesai" : "Selesai menilai"}
-          </button>
-        )}
-      </div>
-
-      {error && <p className={errorText}>{error}</p>}
     </div>
   );
 }
 
-function RejectButton({
+function AnswerRow({
   answer,
-  rejected,
+  myId,
   choosing,
-  disabled,
-  onClick,
+  noRejectionsLeft,
+  onChoose,
 }: {
   answer: Answer;
-  rejected: boolean;
+  myId: string | undefined;
   choosing: boolean;
-  disabled: boolean;
-  onClick: () => void;
+  noRejectionsLeft: boolean;
+  onChoose: (open: boolean) => void;
 }) {
-  const label = rejected ? "Batal tolak" : choosing ? "Batal" : "Tolak";
+  const setRejection = useRoomStore((s) => s.setRejection);
+  const [error, setError] = useState<string | null>(null);
+  const isMine = answer.userId === myId;
+  const mine = answer.rejectedBy.find((r) => r.userId === myId);
+  const showReasons = !isMine && !answer.verified && (mine !== undefined || choosing);
+
+  const send = async (reason: RejectReason | null) => {
+    onChoose(false);
+    setError(await setRejection(answer.userId, reason));
+  };
+
+  const label = mine ? "Batal Tolak" : choosing ? "Batal" : "Tolak";
+  const disabled = mine === undefined && noRejectionsLeft;
+
   return (
-    <button
-      type="button"
-      aria-expanded={rejected || choosing}
-      aria-label={`${label} ${answer.text}`}
-      disabled={disabled}
-      onClick={onClick}
-      className={`shrink-0 rounded-xl border-2 px-3.5 py-1.5 text-sm font-semibold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen disabled:cursor-not-allowed disabled:border-ink/20 disabled:text-ink-faint ${
-        rejected
-          ? "border-ink bg-white text-ink hover:bg-highlight-soft"
-          : "border-redpen bg-white text-redpen hover:bg-redpen hover:text-white disabled:hover:bg-white"
+    <li
+      className={`space-y-1.5 rounded-xl border-2 bg-white px-3 py-2 ${
+        answer.rejectedBy.length > 0 ? "border-redpen" : "border-ink/20"
       }`}
     >
-      {label}
-    </button>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-lg leading-6 font-bold break-words">{answer.text}</p>
+          <p className="truncate text-sm font-medium text-ink-soft">{isMine ? "Jawabanmu" : answer.name}</p>
+        </div>
+        {answer.verified ? (
+          <VerifiedBadge />
+        ) : isMine ? null : (
+          <button
+            type="button"
+            aria-expanded={showReasons}
+            aria-label={`${label} ${answer.text}`}
+            disabled={disabled}
+            onClick={() => (mine ? void send(null) : onChoose(!choosing))}
+            className={`shrink-0 rounded-xl border-2 bg-white px-3.5 py-2 text-sm font-semibold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen disabled:cursor-not-allowed disabled:border-ink/20 disabled:text-ink-faint ${
+              mine ? "border-ink text-ink hover:bg-highlight-soft" : "border-redpen text-redpen hover:bg-highlight-soft"
+            }`}
+          >
+            {label}
+          </button>
+        )}
+      </div>
+
+      {showReasons && (
+        <fieldset className="space-y-1">
+          <legend className="sr-only">Alasan menolak {answer.text}</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {REJECT_REASONS.map((r) => {
+              const selected = mine?.reason === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  aria-pressed={selected}
+                  aria-label={`Tolak ${answer.text}: ${r.label}`}
+                  onClick={() => !selected && void send(r.id)}
+                  className={`rounded-full border-2 px-3 py-1.5 text-sm font-semibold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen ${
+                    selected ? "border-redpen bg-redpen text-white" : "border-ink/30 bg-white text-ink hover:bg-highlight-soft"
+                  }`}
+                >
+                  {buttonLabel(r.label)}
+                </button>
+              );
+            })}
+          </div>
+          {!mine && <p className="text-xs font-medium text-ink-soft">Pilih alasan untuk menolak.</p>}
+        </fieldset>
+      )}
+
+      <RejectedBy answer={answer} />
+      {error && (
+        <p role="alert" className="text-sm font-semibold text-redpen">
+          {error}
+        </p>
+      )}
+    </li>
   );
 }
 
-/** Public votes: who rejected the answer, and why. */
+/**
+ * Public votes: who rejected the answer, and why, in the teacher's red pen. One line per reason
+ * (same as the app), so eight players don't push the other answers off the screen.
+ */
 export function RejectedBy({ answer }: { answer: Answer }) {
   if (answer.rejectedBy.length === 0) return null;
+  const names = new Map<RejectReason, string[]>();
+  for (const r of answer.rejectedBy) names.set(r.reason, [...(names.get(r.reason) ?? []), r.name]);
   return (
-    <ul className="mt-1.5 space-y-0.5 font-hand text-base leading-snug text-redpen">
-      {answer.rejectedBy.map((r) => (
-        <li key={r.userId}>
-          Ditolak {r.name}: {rejectReasonLabel(r.reason)}
+    <ul className="font-hand text-base leading-snug text-redpen">
+      {[...names].map(([reason, rejecters]) => (
+        <li key={reason}>
+          Ditolak {rejecters.join(", ")}: {rejectReasonLabel(reason)}
         </li>
       ))}
     </ul>

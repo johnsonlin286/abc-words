@@ -50,7 +50,7 @@ export default function PickingPhase({ room }: { room: GameRoomView }) {
   const nudge = round === 1 && myPick === null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <RoundTitle room={room} />
 
       {endsAt !== null && room.state.phaseMs !== null && (
@@ -63,15 +63,12 @@ export default function PickingPhase({ room }: { room: GameRoomView }) {
       <hr className="border-t-2 border-paper-line" />
 
       <div>
-        <h3 className="relative pl-4 text-3xl font-bold">
+        {/* Sizes as in the app: compact, so the buttons fit on a small phone under the score row. */}
+        <h3 className="relative pl-4 text-2xl font-bold">
           <Sparks className="-top-1.5 -left-1.5 size-6" color="var(--color-highlight)" />
-          Pilih{" "}
-          <span className="relative inline-block">
-            angkamu!
-            <span aria-hidden className="absolute inset-x-0 -bottom-1 h-1.5 -rotate-1 rounded-full bg-highlight" />
-          </span>
+          Pilih angkamu!
         </h3>
-        <p className="mt-3 mb-5 leading-snug text-ink-soft">
+        <p className="mt-1 mb-3 text-sm leading-snug font-medium text-ink-soft">
           Ketuk satu angka. Angka semua pemain dijumlahkan dan diubah menjadi huruf untuk ronde ini.
         </p>
         <div className="grid grid-cols-5 gap-2 sm:gap-3">
@@ -119,7 +116,7 @@ export default function PickingPhase({ room }: { room: GameRoomView }) {
           className={
             myPick === null
               ? "sr-only"
-              : "mt-5 flex items-center gap-3 rounded-2xl bg-paper-line px-4 py-3"
+              : "mt-3 flex items-center gap-3 rounded-2xl bg-paper-line px-3 py-2 text-sm"
           }
         >
           {myPick !== null && (

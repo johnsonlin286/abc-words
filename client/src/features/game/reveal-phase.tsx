@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PenCircle from "@/components/pen-circle";
 import { errorText, notice } from "@/components/ui";
 import type { RevealInfo } from "@/shared/game";
@@ -13,17 +13,30 @@ import Countdown from "./countdown";
 import { HANDS } from "./hands";
 import { RoundTitle } from "./round-header";
 
+/** Each player's number appears this long after the one before; then the total, then the letter. */
 const STEP_MS = 250;
+/** Length of the `letter-stamp` animation (globals.css). */
+const STAMP_MS = 450;
+
+type ShowVote = (buttons: HTMLElement | null) => void;
 
 /**
  * "Hurufnya sulit?": each player picks "Ganti huruf" or "Tetap". More than half of the active
  * players wanting a change replaces the letter; half or more keeping it starts answering at once.
  * One line above the buttons counts both choices against what they need, so a "Tetap" tap visibly counts.
  */
-function LetterVote({ room, delayMs }: { room: GameRoomView; delayMs: number }) {
+function LetterVote({ room, delayMs, onShown }: { room: GameRoomView; delayMs: number; onShown?: ShowVote }) {
   const myId = useAuthStore((s) => s.user?.userId);
   const setLetterVote = useRoomStore((s) => s.setLetterVote);
   const [error, setError] = useState<string | null>(null);
+
+  // On a small phone, or with many players, the buttons may still be below the fold once the letter lands.
+  const buttons = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!onShown) return;
+    const timer = setTimeout(() => onShown(buttons.current), delayMs);
+    return () => clearTimeout(timer);
+  }, [onShown, delayMs]);
 
   // Same rule as the server: online players who aren't AFK.
   const active = room.members.filter((m) => m.isConnected && !isAfk(room.state, m.userId));
@@ -47,20 +60,25 @@ function LetterVote({ room, delayMs }: { room: GameRoomView; delayMs: number }) 
   const choose = async (choice: "change" | "keep") => setError(await setLetterVote(mine === choice ? null : choice));
 
   const options = [
-    { id: "change" as const, label: "Ganti huruf", count: changes, needed: changeNeeded },
+    { id: "change" as const, label: "Ganti Huruf", count: changes, needed: changeNeeded },
     { id: "keep" as const, label: "Tetap", count: keeps, needed: keepNeeded },
   ];
 
   return (
-    <div className="ink-appear space-y-3" style={{ animationDelay: `${delayMs}ms` }}>
+    <div className="ink-appear space-y-2" style={{ animationDelay: `${delayMs}ms` }}>
       <div>
-        <h3 className="text-xl font-bold">Hurufnya sulit?</h3>
-        <p className="mt-0.5 leading-snug text-ink-soft">
-          Pilih ganti huruf atau tetap. Hurufnya diganti kalau {changeNeeded} pemain memilih ganti.
+        <h3 className="text-lg font-bold">Hurufnya sulit?</h3>
+        {/* One line in one place (as in the app): the rule before voting, who is still deciding after. */}
+        <p role="status" className="text-sm leading-snug font-medium text-ink-soft">
+          {mine === null
+            ? `Diganti kalau ${changeNeeded} pemain memilih ganti.`
+            : waiting > 0
+              ? `Menunggu ${waiting} pemain lain, masih bisa diubah.`
+              : "Semua sudah memilih."}
         </p>
       </div>
 
-      <p className="font-semibold tabular-nums" aria-live="polite">
+      <p className="text-sm font-semibold tabular-nums" aria-live="polite">
         {options.map((o, i) => (
           <span key={o.id}>
             {i > 0 && <span className="px-2 text-ink-faint">·</span>}
@@ -72,7 +90,7 @@ function LetterVote({ room, delayMs }: { room: GameRoomView; delayMs: number }) 
         ))}
       </p>
 
-      <div role="group" aria-label="Pilihan huruf" className="grid grid-cols-2 gap-3">
+      <div ref={buttons} role="group" aria-label="Pilihan huruf" className="grid grid-cols-2 gap-3">
         {options.map((o) => {
           const picked = mine === o.id;
           return (
@@ -103,19 +121,26 @@ function LetterVote({ room, delayMs }: { room: GameRoomView; delayMs: number }) 
         })}
       </div>
 
-      <p role="status" className={mine === null ? "sr-only" : "font-semibold leading-snug"}>
-        {mine !== null &&
-          `Kamu memilih ${mine === "change" ? "ganti huruf" : "tetap"}. ${
-            waiting > 0 ? `Menunggu ${waiting} pemain lain… (masih bisa diubah)` : "Semua sudah memilih."
-          }`}
-      </p>
       {error && <p className={errorText}>{error}</p>}
     </div>
   );
 }
 
-/** Each player's number appears in turn, then the total, then the letter is stamped and circled. */
-export default function RevealPhase({ room, reveal }: { room: GameRoomView; reveal: RevealInfo }) {
+/**
+ * Each player's number appears in turn, then the total, then the letter is stamped and circled.
+ * Kept short like the app (two columns of players, the letter beside the total), so the vote buttons
+ * under it fit on a small phone without scrolling.
+ */
+export default function RevealPhase({
+  room,
+  reveal,
+  onVoteShown,
+}: {
+  room: GameRoomView;
+  reveal: RevealInfo;
+  /** Called once the stamped letter has landed, so the page can make sure the vote buttons show. */
+  onVoteShown?: ShowVote;
+}) {
   const totalDelay = reveal.picks.length * STEP_MS;
   const letterDelay = totalDelay + STEP_MS;
   const myId = useAuthStore((s) => s.user?.userId);
@@ -125,83 +150,66 @@ export default function RevealPhase({ room, reveal }: { room: GameRoomView; reve
   const stampDelay = changed ? 0 : letterDelay;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <RoundTitle room={room} />
 
       {myAutoPick && (
-        <p role="status" className={notice}>
+        <p role="status" className={`${notice} py-1 text-sm`}>
           <span aria-hidden>🎲 </span>
-          Kamu tidak memilih angka, jadi server memilihkan <span className="font-bold tabular-nums">{myAutoPick.value}</span>{" "}
-          untukmu.
+          Angkamu dipilihkan acak: <span className="font-bold tabular-nums">{myAutoPick.value}</span>
         </p>
       )}
 
-      <div className="grid items-center gap-6 sm:grid-cols-2">
-        <div>
-          <ul className="flex flex-col">
-            {reveal.picks.map((p, i) => (
-              <li
-                key={p.userId}
-                className="ink-appear flex items-center justify-between gap-3 border-b-2 border-paper-line py-1.5"
-                style={{ animationDelay: `${i * STEP_MS}ms` }}
-              >
-                <span className="min-w-0 truncate font-semibold">
-                  {p.name}
-                  {p.auto && (
-                    <span className="ml-1.5 text-sm font-medium text-ink-soft">
-                      <span aria-hidden>🎲 </span>acak
-                    </span>
-                  )}
-                </span>
-                <span className="flex shrink-0 items-center gap-2">
-                  <Image src={HANDS[p.value - 1]} alt="" sizes="40px" className="h-7 w-auto" />
-                  <span className="w-7 text-right text-xl font-bold tabular-nums">{p.value}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p
-            className="ink-appear mt-1 flex items-baseline justify-between pt-1"
-            style={{ animationDelay: `${totalDelay}ms` }}
+      <ul className="grid grid-cols-2 gap-x-[6%]">
+        {reveal.picks.map((p, i) => (
+          <li
+            key={p.userId}
+            aria-label={`${p.name}: ${p.value}${p.auto ? ", acak" : ""}`}
+            className="ink-appear flex items-center gap-1.5 border-b-2 border-paper-line py-1"
+            style={{ animationDelay: `${i * STEP_MS}ms` }}
           >
-            <span className="font-bold">Jumlah</span>
-            <span className="text-2xl font-bold tabular-nums">{reveal.total}</span>
-          </p>
-        </div>
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+              {p.auto && <span aria-hidden>🎲 </span>}
+              {p.name}
+            </span>
+            <Image src={HANDS[p.value - 1]} alt="" sizes="32px" className="h-[22px] w-auto" />
+            <span className="w-5 text-right font-bold tabular-nums">{p.value}</span>
+          </li>
+        ))}
+      </ul>
 
-        <div className="flex flex-col items-center gap-4 py-2">
-          {/* Keyed by the letter, so a replacement letter is stamped and circled again. */}
+      <div className="flex items-center">
+        <div className="ink-appear flex flex-1 flex-col items-center text-center" style={{ animationDelay: `${totalDelay}ms` }}>
+          <span className="text-sm font-bold">Jumlah</span>
+          <span className="text-3xl font-bold tabular-nums">{reveal.total}</span>
+          {changed ? (
+            <span role="status" className="text-sm font-medium text-ink-soft">
+              Huruf <s className="font-bold text-ink-faint decoration-redpen decoration-[3px]">{reveal.changedFrom}</s> diganti
+            </span>
+          ) : (
+            reveal.skippedFrom && (
+              <span className="text-sm font-medium text-ink-soft">
+                {reveal.skippedFrom} sudah keluar, lompat ke {reveal.letter}.
+              </span>
+            )
+          )}
+        </div>
+        <div className="flex flex-1 justify-center py-3">
+          {/* Keyed by the letter, so a replacement letter is stamped and circled again. Fixed width keeps the loop round around narrow letters like I. */}
           <p
             key={reveal.letter}
             aria-label={`Huruf ronde ini: ${reveal.letter}`}
-            className="letter-stamp relative px-3 text-[7.5rem] leading-none font-bold text-redpen"
+            className="letter-stamp relative w-20 text-center text-[4rem] leading-[4.5rem] font-bold text-redpen"
             style={{ animationDelay: `${stampDelay}ms` }}
           >
             {reveal.letter}
-            <PenCircle
-              key={reveal.letter}
-              draw
-              delayMs={stampDelay + 350}
-              className="-inset-6 h-[calc(100%+3rem)] w-[calc(100%+3rem)]"
-            />
+            <PenCircle key={reveal.letter} draw delayMs={stampDelay + 350} />
           </p>
-          {changed ? (
-            <p role="status" className="ink-appear text-center font-semibold">
-              Huruf <s className="text-ink-faint decoration-redpen decoration-[3px]">{reveal.changedFrom}</s> diganti
-              menjadi {reveal.letter}.
-            </p>
-          ) : (
-            reveal.skippedFrom && (
-              <p className="ink-appear text-center text-sm font-medium text-ink-soft" style={{ animationDelay: `${letterDelay}ms` }}>
-                {reveal.skippedFrom} sudah pernah keluar, jadi lompat ke {reveal.letter}.
-              </p>
-            )
-          )}
         </div>
       </div>
 
       {endsAt !== null && room.state.phaseMs !== null && <Countdown endsAt={endsAt} totalMs={room.state.phaseMs} />}
-      {!changed && <LetterVote room={room} delayMs={letterDelay} />}
+      {!changed && <LetterVote room={room} delayMs={letterDelay + STAMP_MS} onShown={onVoteShown} />}
     </div>
   );
 }

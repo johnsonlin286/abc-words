@@ -37,7 +37,7 @@ export default function EndGameDialog({ className }: { className?: string }) {
         }}
       >
         <Flag aria-hidden className="size-4" strokeWidth={2.5} />
-        Akhiri permainan
+        Akhiri Permainan
       </button>
       <dialog
         ref={dialog}
@@ -59,7 +59,7 @@ export default function EndGameDialog({ className }: { className?: string }) {
           <div className="flex flex-wrap gap-3 pt-1">
             {/* First in the DOM so it gets focus: the safe choice is the default. */}
             <button type="button" onClick={close} className={buttonPrimary}>
-              Lanjut main
+              Lanjut Main
             </button>
             <button
               type="button"
@@ -67,7 +67,7 @@ export default function EndGameDialog({ className }: { className?: string }) {
               disabled={busy}
               className={`${buttonSecondary} border-redpen text-redpen hover:bg-white`}
             >
-              Ya, akhiri
+              Ya, Akhiri
             </button>
           </div>
         </div>

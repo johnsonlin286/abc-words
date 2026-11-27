@@ -125,6 +125,8 @@ export default function Lobby({
               onCodeChange={(value) => {
                 setCode(value);
                 setNotice(null);
+                // An old "wrong password" or "room full" doesn't belong to the new code.
+                clearError();
               }}
               codeLocked={codeLocked}
               onUnlockCode={() => {

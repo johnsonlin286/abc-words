@@ -1,18 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { buttonPrimary, input } from "@/components/ui";
-import { ANSWER_MAX, categoryLabel, validateAnswer } from "@/shared/game";
+import { ANSWER_MAX, validateAnswer } from "@/shared/game";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
-import AnswerBoard from "./answer-board";
+import AnswerPills from "./answer-pills";
 import Countdown, { useTimeLeft } from "./countdown";
 import RoundHeader from "./round-header";
 
 const NO_PASTE_MESSAGE = "Jawaban harus diketik sendiri.";
 
-function AnswerForm({ letter }: { letter: string }) {
+/**
+ * Type one answer and send it (same as the app): the field is ready at once, and again after a
+ * pause, because this phase is a race. Answers have to be typed, so paste and drop are refused.
+ */
+function AnswerForm({ letter, paused }: { letter: string; paused: boolean }) {
   const submitAnswer = useRoomStore((s) => s.submitAnswer);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!paused) inputRef.current?.focus();
+  }, [paused]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [alert, setAlert] = useState<string | null>(null);
@@ -47,6 +55,7 @@ function AnswerForm({ letter }: { letter: string }) {
     <form onSubmit={handleSubmit} className="space-y-2">
       <div className="flex gap-2">
         <input
+          ref={inputRef}
           aria-label={`Jawaban berawalan huruf ${letter}`}
           className={`${input} min-w-0 flex-1 text-lg`}
           value={text}
@@ -61,7 +70,6 @@ function AnswerForm({ letter }: { letter: string }) {
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
-          autoFocus
         />
         <button
           type="submit"
@@ -85,35 +93,26 @@ function AnswerForm({ letter }: { letter: string }) {
   );
 }
 
+/** Letter, time and the answer field close together, then the words already used (same as the app). */
 export default function AnsweringPhase({ room, letter }: { room: GameRoomView; letter: string }) {
   const myId = useAuthStore((s) => s.user?.userId);
   const endsAt = useRoomStore((s) => s.phaseEndsAt);
   const mine = room.state.answers.find((a) => a.userId === myId);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <RoundHeader room={room} letter={letter} />
       {endsAt !== null && room.state.phaseMs !== null && <Countdown endsAt={endsAt} totalMs={room.state.phaseMs} />}
 
       {mine ? (
-        <p className="rounded-xl border-2 border-ink bg-highlight-soft px-4 py-3 font-medium">
+        <p role="status" className="rounded-xl border-2 border-ink bg-highlight-soft px-3.5 py-2.5 font-medium">
           Jawabanmu: <span className="text-lg font-bold break-words">{mine.text}</span>. Menunggu pemain lain.
         </p>
       ) : (
-        <div className="space-y-3">
-          <div>
-            <h3 className="text-lg font-bold">Tulis jawabanmu!</h3>
-            <p className="mt-1 leading-snug text-ink-soft">
-              Satu jawaban berawalan <span className="font-bold text-redpen">{letter}</span> dari kategori{" "}
-              <span className="font-bold text-ink">{categoryLabel(room.settings)}</span>. Kata yang sudah dipakai pemain
-              lain tidak boleh, jadi cepat!
-            </p>
-          </div>
-          <AnswerForm letter={letter} />
-        </div>
+        <AnswerForm letter={letter} paused={room.state.paused} />
       )}
 
-      <AnswerBoard room={room} />
+      <AnswerPills room={room} />
     </div>
   );
 }

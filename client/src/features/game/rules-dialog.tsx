@@ -13,7 +13,7 @@ export default function RulesDialog({ className }: { className?: string }) {
     <>
       <button type="button" className={className} onClick={() => dialog.current?.showModal()}>
         <BookOpen aria-hidden className="size-4" strokeWidth={2.5} />
-        Cara main
+        Cara Main
       </button>
       <dialog
         ref={dialog}

@@ -11,7 +11,7 @@ import { ChatBody } from "./chat-panel";
  * from other players, which opens the chat as a sheet from the bottom of the screen. Below the game
  * the inline panel was out of sight on a phone and easy to forget.
  */
-export default function ChatDock() {
+export default function ChatDock({ raised = 0 }: { /** Lifts the button over a footer of this height (voting). */ raised?: number }) {
   const me = useAuthStore((s) => s.user);
   const messages = useRoomStore((s) => s.messages);
   const [open, setOpen] = useState(false);
@@ -40,6 +40,7 @@ export default function ChatDock() {
         aria-label={unread > 0 ? `Buka obrolan, ${unread} pesan baru` : "Buka obrolan"}
         aria-expanded={open}
         onClick={() => setOpen(true)}
+        style={raised ? { bottom: `calc(max(1rem, env(safe-area-inset-bottom)) + ${raised}px)` } : undefined}
         className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 grid size-14 place-items-center rounded-full border-2 border-ink bg-highlight text-ink shadow-[3px_3px_0_var(--color-ink)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_var(--color-ink)]"
       >
         <MessageCircle aria-hidden className="size-7" strokeWidth={2.5} />

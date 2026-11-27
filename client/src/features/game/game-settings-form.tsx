@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ANSWER_SECONDS_OPTIONS,
   CATEGORIES,
@@ -21,6 +21,13 @@ const optionClass = (selected: boolean) =>
 const stepperClass =
   "grid size-9 place-items-center rounded-full border-2 border-ink bg-white text-xl leading-none font-bold text-ink hover:bg-highlight-soft focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen disabled:border-ink/25 disabled:text-ink-faint disabled:hover:bg-white";
 
+/** The custom category is saved once the host pauses typing (and when the field loses focus). */
+const TYPING_PAUSE_MS = 600;
+
+/**
+ * Saved while typing, so other players see the name right away and "Mulai permainan" is ready without
+ * leaving the field first (same as the app).
+ */
 function CustomCategoryInput({
   value,
   editable,
@@ -31,14 +38,38 @@ function CustomCategoryInput({
   onCommit: (value: string) => void;
 }) {
   const [draft, setDraft] = useState(value);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saved = useRef(value);
+
+  const cancel = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  };
+  const commit = (text: string) => {
+    cancel();
+    if (text === saved.current) return;
+    saved.current = text;
+    onCommit(text);
+  };
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
 
   return (
     <input
       aria-label="Nama kategori"
       className={`${input} mt-3 read-only:bg-paper`}
       value={editable ? draft : value}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={() => draft !== value && onCommit(draft)}
+      onChange={(e) => {
+        const text = e.target.value;
+        setDraft(text);
+        cancel();
+        timer.current = setTimeout(() => commit(text), TYPING_PAUSE_MS);
+      }}
+      onBlur={() => commit(draft)}
       onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
       maxLength={CUSTOM_CATEGORY_MAX}
       placeholder={editable ? "Mis. nama jajanan" : "Host belum menulis kategori"}
@@ -126,10 +157,20 @@ export default function GameSettingsForm({ settings, isHost }: { settings: GameS
   );
 }
 
-/** Answering time as a five-step slider (20–40 s), saved on every step. */
+/**
+ * Answering time as a five-step slider (20–40 s). It moves freely while dragged and is saved once
+ * let go (or after a key press), so dragging across it sends one update rather than one per step.
+ */
 function AnswerTime({ value, onChange }: { value: number; onChange: (seconds: number) => void }) {
   const options = ANSWER_SECONDS_OPTIONS;
-  const index = Math.max(options.indexOf(value as (typeof options)[number]), 0);
+  const [dragged, setDragged] = useState<number | null>(null);
+  const index = dragged ?? Math.max(options.indexOf(value as (typeof options)[number]), 0);
+  const shown = options[index]!;
+  const commit = () => {
+    if (dragged === null) return;
+    setDragged(null);
+    if (options[dragged] !== value) onChange(options[dragged]!);
+  };
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between gap-3">
@@ -137,7 +178,7 @@ function AnswerTime({ value, onChange }: { value: number; onChange: (seconds: nu
           Waktu menjawab
         </label>
         <output htmlFor="answer-seconds" className="text-lg font-bold tabular-nums">
-          {value} detik
+          {shown} detik
         </output>
       </div>
       <input
@@ -147,13 +188,16 @@ function AnswerTime({ value, onChange }: { value: number; onChange: (seconds: nu
         max={options.length - 1}
         step={1}
         value={index}
-        aria-valuetext={`${value} detik`}
-        onChange={(e) => onChange(options[Number(e.target.value)]!)}
+        aria-valuetext={`${shown} detik`}
+        onChange={(e) => setDragged(Number(e.target.value))}
+        onPointerUp={commit}
+        onKeyUp={commit}
+        onBlur={commit}
         className="w-full cursor-pointer accent-[var(--color-ink)]"
       />
       <div aria-hidden className="mt-1 flex justify-between text-xs font-semibold text-ink-soft tabular-nums">
         {options.map((s) => (
-          <span key={s} className={s === value ? "text-ink" : ""}>
+          <span key={s} className={s === shown ? "text-ink" : ""}>
             {s}
           </span>
         ))}

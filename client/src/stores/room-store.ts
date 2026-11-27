@@ -17,6 +17,8 @@ import { useAuthStore } from "./auth-store";
 
 const SIGN_IN_TIMEOUT = 5000;
 const MAX_MESSAGES = 200;
+/** Longest wait between two attempts after the server dropped or refused the connection. */
+const RETRY_MAX_MS = 15_000;
 
 export type Connection = "idle" | "connecting" | "online" | "reconnecting";
 export type GameRoomView = RoomView<GameState, GameSettings>;
@@ -152,6 +154,22 @@ export const useRoomStore = create<RoomState>((set, get) => {
       chatMutedUntil: loadChatMute(room.id),
     });
 
+  // socket.io gives up when the server drops or refuses a connection itself; retry with a backoff
+  // (same as the app), as long as the player is still signed in.
+  let rejections = 0;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  const clearRetry = () => {
+    if (retryTimer) clearTimeout(retryTimer);
+    retryTimer = null;
+  };
+  const scheduleRetry = (s: GameSocket) => {
+    clearRetry();
+    const delay = Math.min(1_000 * 2 ** rejections++, RETRY_MAX_MS);
+    retryTimer = setTimeout(() => {
+      if (useAuthStore.getState().user && !s.active) s.connect();
+    }, delay);
+  };
+
   const socket = (): GameSocket => {
     if (bound) return bound;
     const s = getGameSocket();
@@ -180,14 +198,25 @@ export const useRoomStore = create<RoomState>((set, get) => {
       }),
     );
 
-    s.on("connect", () => set({ connection: "online", error: null }));
+    s.on("connect", () => {
+      rejections = 0;
+      clearRetry();
+      set({ connection: "online", error: null });
+    });
     s.on("disconnect", (reason) => {
       // Client/server-initiated disconnects don't auto-reconnect; network drops do.
       set({ connection: reason === "io client disconnect" ? "idle" : "reconnecting" });
+      if (reason === "io server disconnect") scheduleRetry(s);
     });
     s.on("connect_error", (err) => {
       const isAuthError = err.message in NAME_ERRORS || err.message === UNAUTHORIZED;
-      if (!isAuthError) return set({ connection: signingIn ? "connecting" : "reconnecting" });
+      if (!isAuthError) {
+        set({ connection: signingIn ? "connecting" : "reconnecting" });
+        // Still active: a network problem, which socket.io retries by itself. Otherwise the server
+        // refused the handshake (e.g. while restarting) and socket.io gave up: try again here.
+        if (!signingIn && !s.active) scheduleRetry(s);
+        return;
+      }
 
       s.disconnect();
       set({ ...NO_ROOM, ready: false, connection: "idle" });

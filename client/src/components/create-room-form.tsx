@@ -14,6 +14,7 @@ export default function CreateRoomForm() {
   const createRoom = useRoomStore((s) => s.createRoom);
   const pending = useRoomStore((s) => s.pending);
   const serverError = useRoomStore((s) => s.error);
+  const online = useRoomStore((s) => s.connection === "online");
 
   const [isPrivate, setIsPrivate] = useState(false);
   const [password, setPassword] = useState("");
@@ -80,7 +81,7 @@ export default function CreateRoomForm() {
 
       {error && <p className={errorText}>{error}</p>}
 
-      <button type="submit" disabled={pending} className={buttonPrimary}>
+      <button type="submit" disabled={pending || !online} className={buttonPrimary}>
         {pending ? "Membuat room…" : "Buat room"}
       </button>
     </form>

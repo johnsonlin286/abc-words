@@ -28,7 +28,8 @@ const URGENT_MS = 3_000;
  * or earlier when `urgent` is set.
  */
 export default function Countdown({ endsAt, totalMs, urgent: forced = false }: { endsAt: number; totalMs: number; urgent?: boolean }) {
-  const left = useTimeLeft(endsAt) ?? 0;
+  // Capped: a newer end time can arrive before the phase starts, showing more than the phase (as in the app).
+  const left = Math.min(useTimeLeft(endsAt) ?? 0, totalMs);
   const urgent = forced || left <= URGENT_MS;
 
   return (
@@ -36,7 +37,7 @@ export default function Countdown({ endsAt, totalMs, urgent: forced = false }: {
       <div className="h-3.5 flex-1 overflow-hidden rounded-full border-2 border-ink bg-white">
         <div
           className={`h-full rounded-full transition-[width] duration-100 ease-linear ${urgent ? "bg-redpen" : "bg-highlight"}`}
-          style={{ width: `${Math.min(left / totalMs, 1) * 100}%` }}
+          style={{ width: `${(left / totalMs) * 100}%` }}
         />
       </div>
       <span

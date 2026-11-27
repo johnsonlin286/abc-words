@@ -29,6 +29,7 @@ export default function JoinRoomForm({
   const joinRoom = useRoomStore((s) => s.joinRoom);
   const pending = useRoomStore((s) => s.pending);
   const serverError = useRoomStore((s) => s.error);
+  const online = useRoomStore((s) => s.connection === "online");
 
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export default function JoinRoomForm({
   const handleCodeChange = (value: string) => {
     onCodeChange(value.replace(/[^a-z0-9]/gi, "").toUpperCase());
     setPassword("");
+    setLocalError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -147,7 +149,7 @@ export default function JoinRoomForm({
 
       {error && <p className={errorText}>{error}</p>}
 
-      <button type="submit" disabled={pending || !joinable} className={buttonPrimary}>
+      <button type="submit" disabled={pending || !joinable || !online} className={buttonPrimary}>
         {pending ? "Bergabung…" : "Gabung room"}
       </button>
     </form>
