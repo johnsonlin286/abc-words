@@ -182,13 +182,62 @@ body {
   animation: tap-nudge 480ms ease-in-out;
 }
 
+/* How to play cards (features/how-to-play/slides.tsx): pictures pop in, rows slide in from the
+   right, and a red-pen line is drawn across a failed answer. Delays are set inline. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes strike-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.pop-in {
+  animation: pop-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.slide-in-right {
+  animation: slide-in-right 300ms ease-out both;
+}
+
+.strike-draw {
+  transform-origin: left;
+  animation: strike-draw 350ms ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ink-appear,
   .letter-stamp,
   .pen-draw,
   .marker-sweep,
   .logo-stamp,
-  .tap-nudge {
+  .tap-nudge,
+  .pop-in,
+  .slide-in-right,
+  .strike-draw {
     animation: none;
   }
 }

@@ -25,11 +25,11 @@ export default function HeroCta() {
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
       <a href={`#${START_ID}`} onClick={start} className={`${buttonPrimary} px-6 py-3 text-lg sm:w-auto`}>
         <Play aria-hidden className="size-5 fill-current" strokeWidth={2.5} />
-        Main sekarang
+        Main Sekarang
       </a>
       <Link href="/cara-main" className={`${buttonGhost} py-3 text-lg`}>
         <BookOpen aria-hidden className="size-5" strokeWidth={2.5} />
-        Cara bermain
+        Cara Bermain
       </Link>
     </div>
   );

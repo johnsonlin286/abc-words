@@ -229,7 +229,7 @@ export default function RoomInvite({ code }: { code: string }) {
             {error && <p className={errorText}>{error}</p>}
 
             <button type="submit" disabled={!joinable || busy} className={`${buttonPrimary} py-3`}>
-              {busy ? "Masuk…" : "Gabung ke room"}
+              {busy ? "Masuk…" : "Gabung ke Room"}
               {!busy && <ArrowRight aria-hidden className="size-5" strokeWidth={2.75} />}
             </button>
 
@@ -247,12 +247,12 @@ export default function RoomInvite({ code }: { code: string }) {
           terbanyak menang.
         </figcaption>
         <Link href="/cara-main" className={`${linkButton} w-fit`}>
-          Baca cara main lengkap
+          Baca Cara Main Lengkap
         </Link>
       </figure>
 
       <Link href="/" onClick={clearError} className={`${linkButton} w-fit text-sm text-ink-soft`}>
-        Lihat beranda
+        Lihat Beranda
       </Link>
     </div>
   );

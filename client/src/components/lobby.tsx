@@ -13,8 +13,8 @@ import RoomList from "./room-list";
 type Tab = "create" | "join";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "create", label: "Buat room" },
-  { id: "join", label: "Gabung room" },
+  { id: "create", label: "Buat Room" },
+  { id: "join", label: "Gabung Room" },
 ];
 
 /** Signed in, not in a room: create one, join by code, or pick an open room. */
@@ -87,7 +87,7 @@ export default function Lobby({
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 className="text-2xl font-bold">Halo, {user?.name}</h2>
           <button type="button" onClick={signOut} className={`${linkButton} text-sm`}>
-            Ganti nama
+            Ganti Nama
           </button>
         </div>
 

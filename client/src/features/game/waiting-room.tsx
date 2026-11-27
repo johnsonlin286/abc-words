@@ -31,7 +31,7 @@ export default function WaitingRoom({ room, myId }: { room: GameRoomView; myId: 
 
   let status: string | null = null;
   if (!enoughPlayers) status = `Butuh minimal ${MIN_PLAYERS} pemain. Bagikan link undangan ke temanmu.`;
-  else if (!isHost) status = iAmReady ? `Kamu sudah siap. Menunggu ${hostName} memulai permainan.` : 'Tekan "Saya siap!" kalau sudah siap bermain.';
+  else if (!isHost) status = iAmReady ? `Kamu sudah siap. Menunggu ${hostName} memulai permainan.` : 'Tekan "Saya Siap!" kalau sudah siap bermain.';
   else if (categoryMissing) status = "Tulis nama kategorinya dulu.";
   else if (notReady.length > 0) {
     status = `Menunggu ${notReady.map((m) => m.name).join(", ")} siap. Tekan 🔔 untuk memanggil.`;
@@ -53,7 +53,7 @@ export default function WaitingRoom({ room, myId }: { room: GameRoomView; myId: 
           myId={myId}
           ready={room.state.ready}
         />
-        {/* Only the host can change the rules, so the others just get them in one line. */}
+        {/* Only the host can change the rules; the others read them, one labelled line each. */}
         {isHost ? <GameSettingsForm settings={room.settings} isHost /> : <RulesSummary settings={room.settings} />}
       </div>
 
@@ -68,7 +68,7 @@ export default function WaitingRoom({ room, myId }: { room: GameRoomView; myId: 
             className={`${buttonPrimary} shrink-0 px-6 py-3 text-lg whitespace-nowrap`}
           >
             <Play aria-hidden className="size-5 fill-current" strokeWidth={2.5} />
-            {starting ? "Memulai…" : "Mulai permainan"}
+            {starting ? "Memulai…" : "Mulai Permainan"}
           </button>
         )}
         {!isHost && (
@@ -79,11 +79,11 @@ export default function WaitingRoom({ room, myId }: { room: GameRoomView; myId: 
             className={`${iAmReady ? buttonSecondary : buttonPrimary} shrink-0 px-6 py-3 text-lg whitespace-nowrap`}
           >
             {iAmReady ? (
-              "Batal siap"
+              "Batal Siap"
             ) : (
               <>
                 <Check aria-hidden className="size-5" strokeWidth={3} />
-                Saya siap!
+                Saya Siap!
               </>
             )}
           </button>
@@ -95,22 +95,30 @@ export default function WaitingRoom({ room, myId }: { room: GameRoomView; myId: 
   );
 }
 
-/** The rules as one line for players who can't change them. */
+/**
+ * The rules for players who can't change them (same as the app): one labelled line each, so no
+ * number stands alone (a bare "30 detik" was unclear).
+ */
 function RulesSummary({ settings }: { settings: GameSettings }) {
+  const rules = [
+    { label: "Kategori", value: categoryLabel(settings) || "Belum ditulis" },
+    { label: "Jumlah ronde", value: `${settings.maxRounds} ronde` },
+    { label: "Waktu menjawab", value: `${settings.answerSeconds} detik` },
+  ];
   return (
     <section aria-labelledby="rules-summary-heading">
       <h2 id="rules-summary-heading" className="text-xl font-bold">
         Aturan main
       </h2>
-      <p className="mt-2 font-medium text-ink-soft">
-        Kategori{" "}
-        <span className="rounded-sm bg-highlight-soft px-1.5 font-bold break-words text-ink">
-          {categoryLabel(settings) || "belum ditulis"}
-        </span>{" "}
-        · <span className="font-bold text-ink tabular-nums">{settings.maxRounds}</span> ronde ·{" "}
-        <span className="font-bold text-ink tabular-nums">{settings.answerSeconds}</span> detik
-      </p>
-      <p className="mt-1 text-sm text-ink-faint">Diatur oleh host.</p>
+      <dl className="mt-1">
+        {rules.map((r) => (
+          <div key={r.label} className="flex items-center justify-between gap-4 border-b border-paper-line py-2.5 last:border-0">
+            <dt className="text-ink-soft">{r.label}</dt>
+            <dd className="text-right font-bold break-words">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-sm text-ink-faint">Diatur oleh host.</p>
     </section>
   );
 }

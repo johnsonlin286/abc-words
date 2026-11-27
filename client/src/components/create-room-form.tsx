@@ -82,7 +82,7 @@ export default function CreateRoomForm() {
       {error && <p className={errorText}>{error}</p>}
 
       <button type="submit" disabled={pending || !online} className={buttonPrimary}>
-        {pending ? "Membuat room…" : "Buat room"}
+        {pending ? "Membuat Room…" : "Buat Room"}
       </button>
     </form>
   );

@@ -92,7 +92,7 @@ export default function RoomList({ onSelect, onCreate }: Props) {
           onClick={() => rooms.refetch()}
           disabled={rooms.isFetching}
         >
-          {rooms.isFetching ? "Memuat…" : "Muat ulang"}
+          {rooms.isFetching ? "Memuat…" : "Muat Ulang"}
         </button>
       </div>
 
@@ -102,7 +102,7 @@ export default function RoomList({ onSelect, onCreate }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-dashed border-ink-soft px-4 py-3.5">
           <p className="font-semibold">Belum ada room. Buat yang pertama!</p>
           <button type="button" onClick={onCreate} className={`${buttonSecondary} px-4 py-2 text-sm`}>
-            Buat room
+            Buat Room
           </button>
         </div>
       )}

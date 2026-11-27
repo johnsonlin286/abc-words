@@ -3,9 +3,9 @@
 import { BookOpen, X } from "lucide-react";
 import { useRef } from "react";
 import { buttonPrimary } from "@/components/ui";
-import HowToPlay from "./how-to-play";
+import FullRules from "@/features/how-to-play/full-rules";
 
-/** "Cara main" button that opens the rules on a notebook sheet without leaving the room. */
+/** "Cara Main" button that opens every rule (folded, as in the app) on a notebook sheet without leaving the room. */
 export default function RulesDialog({ className }: { className?: string }) {
   const dialog = useRef<HTMLDialogElement>(null);
 
@@ -38,10 +38,11 @@ export default function RulesDialog({ className }: { className?: string }) {
                 aria-hidden
                 className="absolute -inset-x-2 top-[42%] bottom-1 -z-10 -rotate-1 rounded-[0.4em_0.2em_0.5em_0.25em] bg-highlight"
               />
-              Cara main
+              Aturan lengkap
             </span>
           </h2>
-          <HowToPlay headingLevel={3} />
+          <p className="-mt-4 text-lg text-ink-soft">Ketuk setiap langkah untuk membaca detailnya.</p>
+          <FullRules headingLevel={3} />
           <button type="button" onClick={() => dialog.current?.close()} className={`${buttonPrimary} self-start px-6`}>
             Tutup
           </button>

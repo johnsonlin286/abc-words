@@ -44,7 +44,7 @@ export const STEPS = [
     title: "Siapkan room",
     body: [
       `Butuh ${MIN_PLAYERS}–${LIMITS.maxMembers} pemain. Host memilih kategori dan jumlah ronde (maksimal ${MAX_ROUNDS}).`,
-      'Setiap pemain menekan "Saya siap!"; host baru bisa memulai setelah semua siap. Host bisa memanggil (🔔) pemain yang belum siap, atau mengeluarkannya dari room. Pemain yang dikeluarkan tetap boleh masuk lagi.',
+      'Setiap pemain menekan "Saya Siap!"; host baru bisa memulai setelah semua siap. Host bisa memanggil (🔔) pemain yang belum siap, atau mengeluarkannya dari room. Pemain yang dikeluarkan tetap boleh masuk lagi.',
       `Saat bermain, kalau pemain online tinggal satu, permainan dijeda untuk menunggu yang lain, paling lama ${seconds(WAIT_FOR_PLAYERS_MS)}. Tiap pemain hanya bisa memicu jeda sekali per permainan: kalau putus lagi, waktu tetap berjalan. Permainan berakhir kalau tidak ada yang kembali.`,
       "Permainan yang berhenti sebelum ronde terakhir (host mengakhiri, atau pemain tidak cukup) tetap menampilkan skor akhir kalau sudah ada ronde yang selesai. Ronde yang belum selesai tidak dihitung. Pemain yang keluar tetap tercantum dengan skornya, di paling bawah dan tanpa peringkat.",
     ],
@@ -62,7 +62,7 @@ export const STEPS = [
     body: [
       "Semua angka dijumlahkan lalu dihitung dari A: 1 = A, 26 = Z, 27 kembali ke A.",
       "Huruf yang sudah pernah keluar dilompati ke huruf berikutnya.",
-      `Hurufnya sulit? Saat huruf baru keluar, kamu punya ${seconds(REVEAL_MS)} untuk memilih "Ganti huruf" atau "Tetap". Kalau lebih dari separuh pemain memilih ganti, huruf itu dicoret dan diganti huruf acak yang belum pernah keluar (bisa lebih mudah, bisa juga lebih sulit). Paling banyak sekali per ronde.`,
+      `Hurufnya sulit? Saat huruf baru keluar, kamu punya ${seconds(REVEAL_MS)} untuk memilih "Ganti Huruf" atau "Tetap". Kalau lebih dari separuh pemain memilih ganti, huruf itu dicoret dan diganti huruf acak yang belum pernah keluar (bisa lebih mudah, bisa juga lebih sulit). Paling banyak sekali per ronde.`,
       'Begitu hasilnya pasti (separuh pemain memilih "Tetap", atau huruf sudah diganti), permainan langsung lanjut tanpa menunggu waktu habis.',
     ],
   },
@@ -88,7 +88,7 @@ export const STEPS = [
       `Main berdua (atau tinggal berdua yang online): lawanmu satu-satunya penilai, jadi tolakannya langsung menggugurkan jawaban. Supaya adil, jawaban itu ${formatPoints(POINTS.rejectedByOne)} poin, tidak dikurangi, dan jatah tolak tidak dikembalikan: paling banyak ${REJECTIONS} jawaban yang bisa dijegal per permainan.`,
       `Jatah tolak ${REJECTIONS} per permainan. Tolakan yang didukung pemain lain dan menggugurkan jawaban dikembalikan ke jatahmu.`,
       `Menolak sendirian jawaban yang ternyata tetap lolos dihitung per permainan. Kali ke-${LONE_REJECTION_WARNINGS} mendapat tanda peringatan ${LONE_REJECTION_WARNINGS}/${LONE_REJECTION_WARNINGS + 1} di papan skor. Mulai kali ke-${LONE_REJECTION_WARNINGS + 1} dianggap sengaja: ${formatPoints(POINTS.loneRejection)} poin setiap kali.`,
-      'Tekan "Selesai menilai" kalau sudah. Begitu semua selesai, hasil langsung keluar.',
+      'Tekan "Selesai Menilai" kalau sudah. Begitu semua selesai, hasil langsung keluar.',
     ],
   },
 ];

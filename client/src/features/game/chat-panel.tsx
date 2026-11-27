@@ -28,7 +28,7 @@ export default function ChatPanel() {
 
   // One button walks max -> small -> closed. Reopening lands on small, where it then grows back to max.
   const closed = size === "closed";
-  const stepLabel = closed ? "Buka obrolan" : size === "max" ? "Kecilkan" : reopened ? "Besarkan" : "Tutup";
+  const stepLabel = closed ? "Buka Obrolan" : size === "max" ? "Kecilkan" : reopened ? "Besarkan" : "Tutup";
   const nextStep = () => {
     if (closed) {
       setSize("small");

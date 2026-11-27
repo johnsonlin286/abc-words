@@ -55,7 +55,7 @@ export default function PingAlert({ isReady }: { isReady: boolean }) {
           }}
           className={`${buttonPrimary} shrink-0 bg-white px-3 py-1.5 text-sm`}
         >
-          Saya siap!
+          Saya Siap!
         </button>
         <button type="button" aria-label="Tutup" onClick={clearPing} className="shrink-0 rounded-full p-1 hover:bg-white/60">
           <X aria-hidden className="size-4" strokeWidth={3} />

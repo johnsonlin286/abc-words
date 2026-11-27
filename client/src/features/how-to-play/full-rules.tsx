@@ -1,7 +1,8 @@
+import { ChevronDown } from "lucide-react";
 import { useId } from "react";
-import FingerSum from "./finger-sum";
+import FingerSum from "@/features/game/finger-sum";
+import { CHAT_RULES, SCORE_NOTE, SCORE_ROWS, STEPS } from "@/features/game/rules-content";
 import { formatPoints } from "@/shared/game";
-import { CHAT_RULES, SCORE_NOTE, SCORE_ROWS, STEPS } from "./rules-content";
 
 function Bullets({ items }: { items: readonly string[] }) {
   return (
@@ -14,11 +15,12 @@ function Bullets({ items }: { items: readonly string[] }) {
 }
 
 /**
- * The rules on the notebook: a worked example, each step of a round, points and chat rules.
- * Used by the /cara-main page and by the rules dialog inside a room. `headingLevel` is the
+ * Aturan lengkap (same as the app's rules-screen.tsx): a worked example, each step of a round folded
+ * so the page reads as a list of titles (tap to open), points and chat rules, and the word-list
+ * credits. Used by /cara-main/lengkap and by the rules dialog inside a room. `headingLevel` is the
  * level of the headings inside (2 on the page under its h1, 3 in the dialog under its h2).
  */
-export default function HowToPlay({ headingLevel = 2 }: { headingLevel?: 2 | 3 }) {
+export default function FullRules({ headingLevel = 2 }: { headingLevel?: 2 | 3 }) {
   const H = headingLevel === 2 ? "h2" : "h3";
   const pointsId = useId();
   const chatId = useId();
@@ -34,19 +36,28 @@ export default function HowToPlay({ headingLevel = 2 }: { headingLevel?: 2 | 3 }
         </p>
       </figure>
 
-      <ol className="flex flex-col gap-8">
+      <ol className="flex flex-col gap-3">
         {STEPS.map((step, i) => (
-          <li key={step.title} className="flex gap-4">
-            <span
-              aria-hidden
-              className="grid size-11 shrink-0 place-items-center rounded-xl border-2 border-ink bg-highlight text-xl font-bold shadow-[2px_2px_0_var(--color-ink)]"
-            >
-              {i + 1}
-            </span>
-            <div className="min-w-0 pt-1.5">
-              <H className="text-2xl leading-tight font-bold">{step.title}</H>
-              <Bullets items={step.body} />
-            </div>
+          <li key={step.title}>
+            <details className="group rounded-2xl border-2 border-ink bg-white px-4 py-3 shadow-[3px_3px_0_var(--color-ink)]">
+              <summary className="flex cursor-pointer list-none items-center gap-3 rounded-md focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen [&::-webkit-details-marker]:hidden">
+                <span
+                  aria-hidden
+                  className="grid size-9 shrink-0 place-items-center rounded-lg border-2 border-ink bg-highlight text-lg font-bold"
+                >
+                  {i + 1}
+                </span>
+                <H className="min-w-0 flex-1 text-xl leading-tight font-bold">{step.title}</H>
+                <ChevronDown
+                  aria-hidden
+                  className="size-6 shrink-0 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+                  strokeWidth={2.5}
+                />
+              </summary>
+              <div className="ink-appear">
+                <Bullets items={step.body} />
+              </div>
+            </details>
           </li>
         ))}
       </ol>

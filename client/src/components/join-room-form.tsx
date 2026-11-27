@@ -123,7 +123,7 @@ export default function JoinRoomForm({
           )}
           {codeLocked && onUnlockCode && (
             <button type="button" onClick={onUnlockCode} className={`${linkButton} mt-2 text-sm`}>
-              Pakai kode lain
+              Pakai Kode Lain
             </button>
           )}
         </div>
@@ -150,7 +150,7 @@ export default function JoinRoomForm({
       {error && <p className={errorText}>{error}</p>}
 
       <button type="submit" disabled={pending || !joinable || !online} className={buttonPrimary}>
-        {pending ? "Bergabung…" : "Gabung room"}
+        {pending ? "Bergabung…" : "Gabung Room"}
       </button>
     </form>
   );

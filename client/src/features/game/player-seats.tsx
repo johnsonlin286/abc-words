@@ -180,7 +180,7 @@ function KickDialog({ member, onClose }: { member: MemberView | null; onClose: (
             disabled={busy}
             className={`${buttonSecondary} border-redpen text-redpen hover:bg-white`}
           >
-            Ya, keluarkan
+            Ya, Keluarkan
           </button>
         </div>
       </div>
