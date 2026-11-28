@@ -129,6 +129,14 @@ function loadChatMute(roomId: string): number | null {
   return null;
 }
 
+/**
+ * Said in the lobby when a reconnect finds us in no room although we were in one: the server
+ * restarted (rooms live in memory) or we were away longer than the seat is kept.
+ */
+function lostRoomNotice(roomId: string | null): string | null {
+  return roomId ? `Sambungan ke room ${roomId} terputus. Gabung lagi dengan kodenya atau buat room baru.` : null;
+}
+
 const NO_ROOM = {
   roomId: null,
   room: null,
@@ -181,7 +189,8 @@ export const useRoomStore = create<RoomState>((set, get) => {
         sessionToken: session.sessionToken,
       });
       // No room: e.g. it expired or the server restarted. Otherwise `room:state` follows.
-      set(session.roomId ? { ready: true, roomId: session.roomId } : { ready: true, ...NO_ROOM });
+      if (session.roomId) set({ ready: true, roomId: session.roomId });
+      else set({ ready: true, ...NO_ROOM, notice: lostRoomNotice(get().roomId) });
     });
     // Full snapshot of our room: the source of truth.
     s.on("room:state", (room) => showRoom(room as GameRoomView));
