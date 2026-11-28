@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "dev:all": "concurrently -n next,backend -c blue,magenta \"npm:dev\" \"npm:dev:backend\"",
-    "dev:backend": "npm --prefix ../backend run dev"
+    "dev:backend": "npm --prefix ../backend run dev",
+    "bots": "node scripts/test-bots.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "^5.3.0",
