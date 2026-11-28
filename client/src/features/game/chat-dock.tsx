@@ -7,11 +7,13 @@ import { useRoomStore } from "@/stores/room-store";
 import { ChatBody } from "./chat-panel";
 
 /**
- * Chat on phones: a speech-bubble button in the bottom-right corner with the number of new messages
- * from other players, which opens the chat as a sheet from the bottom of the screen. Below the game
- * the inline panel was out of sight on a phone and easy to forget.
+ * Chat on phones: a bookmark tab on the right edge of the page, like a marker sticking out of a
+ * notebook (owner's choice, 2026-11-28, same as the app; the round button in the corner covered
+ * Tolak buttons). It stays in the page margin, shows the number of new messages from other players,
+ * and opens the chat as a sheet from the bottom. Below the game the inline panel was out of sight on
+ * a phone and easy to forget.
  */
-export default function ChatDock({ raised = 0 }: { /** Lifts the button over a footer of this height (voting). */ raised?: number }) {
+export default function ChatDock() {
   const me = useAuthStore((s) => s.user);
   const messages = useRoomStore((s) => s.messages);
   const [open, setOpen] = useState(false);
@@ -35,21 +37,21 @@ export default function ChatDock({ raised = 0 }: { /** Lifts the button over a f
 
   return (
     <>
+      {/* 30px wide, a little over the card's edge (same as the app), and the tap area reaches further left. */}
       <button
         type="button"
         aria-label={unread > 0 ? `Buka obrolan, ${unread} pesan baru` : "Buka obrolan"}
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        style={raised ? { bottom: `calc(max(1rem, env(safe-area-inset-bottom)) + ${raised}px)` } : undefined}
-        className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 grid size-14 place-items-center rounded-full border-2 border-ink bg-highlight text-ink shadow-[3px_3px_0_var(--color-ink)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_var(--color-ink)]"
+        className="fixed top-[58%] right-0 z-30 flex w-[30px] flex-col items-center gap-1 rounded-l-lg border-2 border-r-0 border-ink bg-highlight py-3 text-ink shadow-[0_3px_0_var(--color-ink)] before:absolute before:inset-y-0 before:-left-4 before:w-4 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-redpen active:translate-x-[2px] active:shadow-[0_1px_0_var(--color-ink)]"
       >
-        <MessageCircle aria-hidden className="size-7" strokeWidth={2.5} />
+        <MessageCircle aria-hidden className="size-[18px]" strokeWidth={2.5} />
         {unread > 0 && (
           <span
             aria-hidden
-            className="absolute -top-1.5 -right-1.5 grid min-w-6 place-items-center rounded-full border-2 border-ink bg-redpen px-1 text-xs font-bold text-white tabular-nums"
+            className="grid min-w-4 place-items-center rounded-full bg-redpen px-0.5 text-[11px] font-bold text-white tabular-nums"
           >
-            {unread > 9 ? "9+" : unread}
+            {unread > 99 ? "99+" : unread}
           </span>
         )}
       </button>

@@ -68,7 +68,7 @@ export default function GameScreen() {
   return (
     // On phones the chat is a floating button, so leave room below the game for it.
     // While voting the pinned footer and the chat button above it take more room.
-    <div className={`flex w-full flex-col gap-6 ${wide ? "" : phase === "voting" ? "pb-44" : "pb-20"}`}>
+    <div className={`flex w-full flex-col gap-6 ${wide ? "" : phase === "voting" ? "pb-28" : "pb-8"}`}>
       <RoomBar room={room} canEnd={playing && room.hostId === myId} playing={playing} />
       <ConnectionNotice />
       <PingAlert isReady={phase !== "waiting" || room.state.ready.includes(myId)} />
@@ -113,7 +113,7 @@ export default function GameScreen() {
       </div>
 
       {/* One chat at a time: the inline card on wider screens, the floating dock on phones. */}
-      {wide ? <ChatPanel /> : <ChatDock raised={voting ? VOTING_FOOTER_HEIGHT : 0} />}
+      {wide ? <ChatPanel /> : <ChatDock />}
     </div>
   );
 }
