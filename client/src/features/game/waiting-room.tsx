@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, Play } from "lucide-react";
 import { buttonPrimary, buttonSecondary, errorText, hint, notice } from "@/components/ui";
-import { MIN_PLAYERS, categoryLabel, playersNotReady, type GameSettings } from "@/shared/game";
+import { MIN_PLAYERS, UNCHECKED_CATEGORY_NOTE, categoryLabel, playersNotReady, type GameSettings } from "@/shared/game";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 import GameSettingsForm from "./game-settings-form";
 import PlayerSeats from "./player-seats";
@@ -118,6 +118,7 @@ function RulesSummary({ settings }: { settings: GameSettings }) {
           </div>
         ))}
       </dl>
+      {settings.category === "custom" && <p className="mb-1 text-sm font-medium text-ink-soft">{UNCHECKED_CATEGORY_NOTE}</p>}
       <p className="text-sm text-ink-faint">Diatur oleh host.</p>
     </section>
   );

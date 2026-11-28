@@ -12,7 +12,7 @@
 //             gives a listed answer ends without an accepted answer: no rank and the "no ranking"
 //             jingle on the final scores. Category Negara, and answer a word that isn't a country.
 //
-// Env: BACKEND_URL (default http://localhost:3001).
+// Env: BACKEND_URL (default http://localhost:3001), JUDGE_MS (how long the bots take to judge, default 1500).
 
 import { io } from "socket.io-client";
 
@@ -115,7 +115,7 @@ function startBot(base, index) {
           }
         }
         await act("doneVoting", { done: true });
-      }, 1500);
+      }, Number(process.env.JUDGE_MS ?? 1500));
     }
   });
 

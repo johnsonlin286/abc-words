@@ -3,9 +3,9 @@
 import { Info } from "lucide-react";
 import { useState } from "react";
 import {
-  LONE_REJECTION_WARNINGS,
   POINTS,
   REJECT_REASONS,
+  UNCHECKED_CATEGORY_NOTE,
   formatPoints,
   rejectReasonLabel,
   type GameState,
@@ -17,17 +17,20 @@ import Countdown from "./countdown";
 import InfoBadge from "./info-badge";
 import RoundHeader from "./round-header";
 import VerifiedBadge from "./verified-badge";
-import { WarningIcon, warningText } from "./warning-badge";
+import OtherCategoryNote from "./other-category-note";
 
 type Answer = GameState["answers"][number];
 
 /** The rules of judging, behind the info button so the answers get the room (same as the app). */
-function rulesText(oneJudge: boolean, anyVerified: boolean): string {
+function rulesText(oneJudge: boolean, anyVerified: boolean, anyOther: boolean): string {
   const rejecting = oneJudge
     ? "Kalian main berdua: jawaban yang kamu tolak langsung gugur, tapi tanpa pengurangan poin. Jatah tolak tidak dikembalikan."
-    : `Jawaban yang gugur ${formatPoints(POINTS.rejected)} poin. Tolakan yang disetujui pemain lain dikembalikan ke jatahmu. Menolak sendirian jawaban yang tetap lolos, mulai kali ke-${LONE_REJECTION_WARNINGS + 1}: ${formatPoints(POINTS.loneRejection)} poin.`;
-  const verified = "Jawaban Terverifikasi ada di daftar kategori ini, jadi langsung lolos dan tidak bisa ditolak.";
-  return anyVerified ? `${rejecting} ${verified}` : rejecting;
+    : `Jawaban yang gugur ${formatPoints(POINTS.rejected)} poin. Tolakan yang disetujui pemain lain dikembalikan ke jatahmu. Menolak sendirian tidak dihukum.`;
+  const verified = anyVerified
+    ? " Jawaban Terverifikasi ada di daftar kategori ini, jadi langsung lolos dan tidak bisa ditolak."
+    : "";
+  const other = anyOther ? " Jawaban dari daftar kategori lain langsung gugur tanpa voting." : "";
+  return `${rejecting}${verified}${other}`;
 }
 
 /** "Salah ejaan" on a button: every word capitalized. */
@@ -56,7 +59,8 @@ export default function VotingPhase({
 
   const { answers, rejectionsLeft, phaseMs } = room.state;
   const anyVerified = answers.some((a) => a.verified);
-  const myLoneRejections = (myId && room.state.loneRejections[myId]) || 0;
+  const anyOther = answers.some((a) => a.otherCategory !== null);
+  const unchecked = room.settings.category === "custom";
   // Same rule as the server: with two players online, each answer has one judge.
   const oneJudge = room.members.filter((m) => m.isConnected).length === 2;
 
@@ -68,7 +72,7 @@ export default function VotingPhase({
       <div className="flex items-center justify-between gap-1">
         <div className="flex min-w-0 items-center gap-1.5">
           <h3 className="text-lg font-bold whitespace-nowrap">Coret yang salah!</h3>
-          <InfoBadge label="Aturan menilai" explanation={rulesText(oneJudge, anyVerified)}>
+          <InfoBadge label="Aturan menilai" explanation={rulesText(oneJudge, anyVerified, anyOther)}>
             <Info aria-hidden className="size-5 text-ink-soft" strokeWidth={2.5} />
           </InfoBadge>
         </div>
@@ -78,12 +82,7 @@ export default function VotingPhase({
       </div>
 
       {oneJudge && <p className="text-sm font-medium text-ink-soft">Main berdua: tolakanmu langsung menggugurkan.</p>}
-      {myLoneRejections >= LONE_REJECTION_WARNINGS && (
-        <p className="flex items-start gap-1.5 text-sm font-semibold text-redpen">
-          <WarningIcon className="mt-0.5 shrink-0" />
-          {warningText(myLoneRejections, null)}
-        </p>
-      )}
+      {unchecked && <p className="text-sm font-medium text-ink-soft">{UNCHECKED_CATEGORY_NOTE}</p>}
 
       <ol ref={listRef} className="flex flex-col gap-2">
         {answers.map((a) => (
@@ -118,7 +117,8 @@ function AnswerRow({
   const [error, setError] = useState<string | null>(null);
   const isMine = answer.userId === myId;
   const mine = answer.rejectedBy.find((r) => r.userId === myId);
-  const showReasons = !isMine && !answer.verified && (mine !== undefined || choosing);
+  const autoFailed = answer.otherCategory !== null;
+  const showReasons = !isMine && !answer.verified && !autoFailed && (mine !== undefined || choosing);
 
   const send = async (reason: RejectReason | null) => {
     onChoose(false);
@@ -136,12 +136,17 @@ function AnswerRow({
     >
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-lg leading-6 font-bold break-words">{answer.text}</p>
+          <p
+            className={`text-lg leading-6 font-bold break-words ${autoFailed ? "text-ink-faint line-through decoration-redpen decoration-[3px]" : ""}`}
+          >
+            {answer.text}
+          </p>
           <p className="truncate text-sm font-medium text-ink-soft">{isMine ? "Jawabanmu" : answer.name}</p>
+          {answer.otherCategory && <OtherCategoryNote category={answer.otherCategory} />}
         </div>
         {answer.verified ? (
           <VerifiedBadge />
-        ) : isMine ? null : (
+        ) : isMine || autoFailed ? null : (
           <button
             type="button"
             aria-expanded={showReasons}

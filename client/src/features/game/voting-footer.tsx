@@ -3,17 +3,18 @@
 import { ArrowDown } from "lucide-react";
 import { useState } from "react";
 import { buttonPrimary, buttonSecondary } from "@/components/ui";
+import { isJudgeable } from "@/shared/game";
 import { useRoomStore, type GameRoomView } from "@/stores/room-store";
 import { isAfk } from "./afk";
 
 /** Height of the footer on phones; the chat button floats above it. */
 export const VOTING_FOOTER_HEIGHT = 80;
 
-/** Same rule as the server: online, with someone else's unverified answer to judge. */
+/** Same rule as the server: online, with someone else's answer to judge (not verified, not auto-failed). */
 function canJudge({ members, state }: GameRoomView, userId: string): boolean {
   return (
     members.some((m) => m.userId === userId && m.isConnected) &&
-    state.answers.some((a) => a.userId !== userId && !a.verified)
+    state.answers.some((a) => a.userId !== userId && isJudgeable(a))
   );
 }
 

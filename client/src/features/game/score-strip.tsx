@@ -5,7 +5,6 @@ import { rankPlayers } from "@/shared/game";
 import { useAuthStore } from "@/stores/auth-store";
 import type { GameRoomView } from "@/stores/room-store";
 import { AfkBadge, isAfk } from "./afk";
-import WarningBadge from "./warning-badge";
 
 /**
  * Running score on one row above the game, however many players there are: your own score
@@ -61,7 +60,6 @@ export default function ScoreStrip({ room }: { room: GameRoomView }) {
             <span title={p.name} className="max-w-28 truncate">
               {p.name}
             </span>
-            <WarningBadge count={room.state.loneRejections[p.userId] ?? 0} name={p.name} />
             {isAfk(room.state, p.userId) && <AfkBadge name={p.name} />}
             <span className="rounded-full bg-highlight px-1.5 font-bold tabular-nums">{p.score}</span>
           </li>

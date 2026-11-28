@@ -3,12 +3,11 @@ import { POINTS, formatPoints, type Penalty } from "@/shared/game";
 import type { GameRoomView } from "@/stores/room-store";
 import RoundHeader from "./round-header";
 import VerifiedBadge from "./verified-badge";
-import { WarningIcon, strikeLabel } from "./warning-badge";
+import OtherCategoryNote from "./other-category-note";
 import { RejectedBy } from "./voting-phase";
 
 const PENALTY_POINTS: Record<Penalty["reason"], number> = {
   "no-answer": POINTS.noAnswer,
-  "lone-rejection": POINTS.loneRejection,
 };
 
 type Answer = GameRoomView["state"]["answers"][number];
@@ -19,7 +18,7 @@ function answerRule(a: Answer): number {
 }
 
 function penaltyText(p: Penalty): string {
-  return p.reason === "no-answer" ? `${p.name} tidak menjawab` : `${p.name} menolak "${p.answerText}" sendirian`;
+  return `${p.name} tidak menjawab`;
 }
 
 /** The rule's points, so a penalty never looks like "0"; see `FloorNote`. */
@@ -33,20 +32,6 @@ function Points({ rule, className }: { rule: number; className: string }) {
  */
 function FloorNote() {
   return <span className="block text-xs font-medium text-ink-soft">Skor tidak bisa minus.</span>;
-}
-
-/** What a lone rejection means for the player, so a warning is never a surprise. */
-function StrikeNote({ penalty }: { penalty: Penalty }) {
-  const strike = penalty.strike ?? 0;
-  const text = penalty.warning
-    ? `Belum ada potongan poin. Sekali lagi menolak sendirian dianggap sengaja: ${formatPoints(POINTS.loneRejection)} poin.`
-    : `Sudah ${strike}× menolak sendirian, dianggap sengaja (${strikeLabel(strike)}).`;
-  return (
-    <span className="mt-0.5 block text-xs font-medium text-ink-soft">
-      <span aria-hidden>ⓘ </span>
-      {text}
-    </span>
-  );
 }
 
 export default function ResultPhase({ room, letter }: { room: GameRoomView; letter: string }) {
@@ -74,6 +59,7 @@ export default function ResultPhase({ room, letter }: { room: GameRoomView; lett
                     {a.name}
                     {a.verified && <VerifiedBadge compact />}
                   </p>
+                  {a.otherCategory && <OtherCategoryNote category={a.otherCategory} />}
                   {(a.points ?? 0) !== answerRule(a) && <FloorNote />}
                 </div>
                 <span className="flex shrink-0 items-center gap-2 text-sm">
@@ -104,22 +90,14 @@ export default function ResultPhase({ room, letter }: { room: GameRoomView; lett
           <ul className="flex flex-col gap-2">
             {penalties.map((p) => (
               <li
-                key={`${p.reason}-${p.userId}-${p.answerText ?? ""}`}
+                key={`${p.reason}-${p.userId}`}
                 className="flex items-center justify-between gap-3 rounded-xl border-2 border-dashed border-redpen/50 bg-white px-3.5 py-2 text-sm"
               >
                 <span className="min-w-0 font-semibold break-words">
                   {penaltyText(p)}
-                  {p.reason === "lone-rejection" && <StrikeNote penalty={p} />}
-                  {!p.warning && p.points !== PENALTY_POINTS[p.reason] && <FloorNote />}
+                  {p.points !== PENALTY_POINTS[p.reason] && <FloorNote />}
                 </span>
-                {p.warning ? (
-                  <span className="flex shrink-0 items-center gap-1.5 font-bold tabular-nums">
-                    <WarningIcon />
-                    Peringatan {strikeLabel(p.strike ?? 0)}
-                  </span>
-                ) : (
-                  <Points rule={PENALTY_POINTS[p.reason]} className="text-redpen" />
-                )}
+                <Points rule={PENALTY_POINTS[p.reason]} className="text-redpen" />
               </li>
             ))}
           </ul>

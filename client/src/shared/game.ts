@@ -27,7 +27,7 @@ export const ANSWER_MIN = 2;
 export const ANSWER_MAX = 40;
 
 /** Same values as `POINTS` in backend/src/modules/abc-words. Scores never go below 0. */
-export const POINTS = { accepted: 1, rejected: -1, rejectedByOne: 0, noAnswer: -1, loneRejection: -1 } as const;
+export const POINTS = { accepted: 1, rejected: -1, rejectedByOne: 0, noAnswer: -1 } as const;
 /** Same as `AFK_ROUNDS` in backend/src/modules/abc-words: rounds in a row without picking or answering. */
 export const AFK_ROUNDS = 2;
 /** Same as `PING_COOLDOWN_MS` in backend/src/modules/abc-words: the host can call a player once per this. */
@@ -49,9 +49,6 @@ export function playersNotReady(
 ) {
   return members.filter((m) => m.isConnected && m.userId !== hostId && !ready.includes(m.userId));
 }
-
-/** Lone rejections per game that only get a warning (yellow card); after that each costs points. */
-export const LONE_REJECTION_WARNINGS = 2;
 
 /** Rejection quota per game. */
 export const REJECTIONS = 3;
@@ -148,8 +145,15 @@ export type GameState = ChatState & {
     at: number;
     /** Milliseconds from the start of answering until the server received this answer. */
     ms: number;
-    /** In the category's word list (Negara for now): passes without a vote and can't be rejected. */
+    /** In the category's word list: passes without a vote and can't be rejected. */
     verified: boolean;
+    /**
+     * Not in this category's list but in another category's (its id, e.g. "negara"): fails by itself,
+     * without a vote, and can't be rejected. Null otherwise; never set in "Lainnya".
+     */
+    otherCategory: string | null;
+    /** A place name (Kota list) in another category: still voted on, but rejecting it is always refunded. */
+    placeName: boolean;
     rejectedBy: { userId: string; name: string; reason: RejectReason }[];
     /** Voting result; null until voting ends. */
     accepted: boolean | null;
@@ -171,8 +175,6 @@ export type GameState = ChatState & {
   letterVotes: string[];
   /** Players who chose to keep this round's letter (reveal phase). */
   letterKeeps: string[];
-  /** Lone rejections per player in this game (public). */
-  loneRejections: Record<string, number>;
   /** Rounds in a row each player neither picked nor answered; see `AFK_ROUNDS`. */
   idleRounds: Record<string, number>;
   /** Answer time per player in this game, accepted answers only; breaks score ties. */
@@ -186,13 +188,8 @@ export type AnswerSpeed = { totalMs: number; count: number };
 export type Penalty = {
   userId: string;
   name: string;
-  reason: "no-answer" | "lone-rejection";
-  /** The answer rejected alone; null for "no-answer". */
-  answerText: string | null;
-  /** Which lone rejection this is in the game; null for "no-answer". */
-  strike: number | null;
-  /** True when it is only a warning (yellow card), with no points taken. */
-  warning: boolean;
+  /** Rejecting alone is no longer penalised (owner, 2026-11-28); only a missing answer costs points. */
+  reason: "no-answer";
   /** Actual score change (0 when the score was already 0). */
   points: number;
 };
@@ -285,6 +282,19 @@ export function categoryLabel(settings: GameSettings): string {
   if (settings.category === "custom") return settings.customCategory;
   return CATEGORIES.find((c) => c.id === settings.category)!.label;
 }
+
+/** Same as the server's `answersToJudge`: verified and auto-failed (other category) answers get no vote. */
+export function isJudgeable(answer: { verified: boolean; otherCategory: string | null }): boolean {
+  return !answer.verified && answer.otherCategory === null;
+}
+
+/** The label of a category id, e.g. "Negara" for "negara" (an auto-failed answer's own category). */
+export function categoryName(id: string): string {
+  return CATEGORIES.find((c) => c.id === id)?.label ?? id;
+}
+
+/** Shown to every player when the category is "Lainnya": nothing is checked against a word list. */
+export const UNCHECKED_CATEGORY_NOTE = "Kategori Lainnya tidak dicek kamus: semua jawaban dinilai pemain.";
 
 /** Same format rule as the server. Returns an error message, or null when acceptable. */
 export function validateAnswer(text: string, letter: string): string | null {

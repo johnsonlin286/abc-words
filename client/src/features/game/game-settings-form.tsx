@@ -7,6 +7,7 @@ import {
   CUSTOM_CATEGORY_MAX,
   MAX_ROUNDS,
   type GameSettings,
+  UNCHECKED_CATEGORY_NOTE,
 } from "@/shared/game";
 import { errorText, hint, input } from "@/components/ui";
 import { useRoomStore } from "@/stores/room-store";
@@ -117,6 +118,9 @@ export default function GameSettingsForm({ settings, isHost }: { settings: GameS
               editable={isHost}
               onCommit={(customCategory) => save({ customCategory })}
             />
+          )}
+          {settings.category === "custom" && (
+            <p className="mt-2 text-sm font-medium text-ink-soft">{UNCHECKED_CATEGORY_NOTE}</p>
           )}
         </fieldset>
 
